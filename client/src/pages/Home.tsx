@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
   Cake, ShieldCheck, Leaf, Star, CheckCircle2, 
-  MessageCircle, Navigation, Heart, ChevronRight, X
+  MessageCircle, Navigation, Heart, ChevronRight, X, Instagram, MapPin
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useGallery } from "@/hooks/use-gallery";
@@ -58,7 +58,7 @@ export default function Home() {
             alt="Gorgeous beautifully decorated cake"
             className="w-full h-full object-cover scale-105 transform animate-[pulse_20s_ease-in-out_infinite_alternate]"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent dark:from-[#2a1810]/85 dark:via-[#3d261c]/60 dark:to-transparent"></div>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pt-20">
@@ -66,7 +66,7 @@ export default function Home() {
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            className="max-w-2xl text-white"
+            className="max-w-2xl text-white ml-auto text-right transition-all duration-700"
           >
             <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 mb-6">
               <Star className="w-4 h-4 text-primary fill-primary" />
@@ -84,18 +84,25 @@ export default function Home() {
             <motion.div variants={fadeInUp} className="flex flex-wrap gap-4">
               <Button 
                 onClick={() => handleOrder()}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 py-6 text-lg font-semibold shadow-lg shadow-primary/25 hover:shadow-xl transition-all hover:-translate-y-1"
+                className="bg-[#25D366] hover:bg-[#1fb855] text-white rounded-full px-7 py-5 text-base font-semibold shadow-lg shadow-[#25D366]/25 hover:shadow-xl transition-all hover:-translate-y-1"
               >
                 <MessageCircle className="mr-2 w-5 h-5" />
-                Order on WhatsApp
+                WhatsApp
+              </Button>
+              <Button 
+                onClick={() => window.open('https://www.instagram.com/singh_cake_delight', '_blank')}
+                className="bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] hover:opacity-90 text-white rounded-full px-7 py-5 text-base font-semibold shadow-lg transition-all hover:-translate-y-1"
+              >
+                <Instagram className="mr-2 w-5 h-5" />
+                Instagram
               </Button>
               <Button 
                 variant="outline"
                 onClick={() => window.open('https://goo.gl/maps/YourMapsLinkHere', '_blank')}
-                className="bg-white/10 text-white border-white/20 hover:bg-white/20 rounded-full px-8 py-6 text-lg font-semibold backdrop-blur-sm transition-all hover:-translate-y-1"
+                className="bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-7 py-5 text-base font-semibold backdrop-blur-sm transition-all hover:-translate-y-1"
               >
-                <Navigation className="mr-2 w-5 h-5" />
-                Get Directions
+                <MapPin className="mr-2 w-5 h-5 text-red-400" />
+                Directions
               </Button>
             </motion.div>
             
@@ -150,7 +157,7 @@ export default function Home() {
             <p className="text-muted-foreground text-lg">Browse our most loved cake flavors. Every cake can be customized for your specific occasion.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {isLoadingProducts ? (
               // Skeleton loading state
               Array(4).fill(0).map((_, i) => (

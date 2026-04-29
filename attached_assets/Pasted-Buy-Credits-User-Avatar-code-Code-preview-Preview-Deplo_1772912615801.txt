@@ -1,0 +1,245 @@
+Buy Credits
+
+
+User Avatar
+
+
+
+
+
+
+
+
+
+
+code
+Code
+
+preview
+Preview
+
+Deploy
+Act as an expert UI/UX designer, conversion strategist, and frontend developer.
+
+Create a modern, high-converting website for a local cake shop.
+
+Business Information
+
+Name: Singh Cake Delight
+Tagline: Delight In Every Bite
+Type: Cake Shop
+Specialty: 100% Homemade Pure Eggless Cakes
+Products:
+Cakes
+Cupcakes
+Jar Cakes
+Bento Cakes
+Glass Cakes
+Location:
+Q/R No. - 8/5, S Colony Rd,
+
+Kansbahal, Odisha 770034
+
+Phone:
++91 96581 81860
+
+Important Note:
+
+No delivery service available.
+
+Customers must pick up their orders from the shop.
+
+Google Rating:
+
+5.0 Stars
+
+Opening Time:
+
+8:00 AM
+Target Audience
+
+Local customers
+Birthday celebrations
+Anniversary celebrations
+Students
+Families
+Small parties
+Primary Goal
+
+Increase cake orders and make it extremely easy for customers to contact or visit the shop.
+
+Design Style
+
+Modern bakery theme
+Soft pastel colors (cream, pink, chocolate brown)
+Elegant typography
+Clean UI
+Mobile-first responsive design
+Fast loading
+SEO optimized
+Website Sections
+
+Hero Section
+Large cake image background.
+
+Headline:
+Delight In Every Bite 🎂
+
+Subheadline:
+100% Homemade Pure Eggless Cakes in Kansbahal
+
+Buttons:
+Order on WhatsApp
+
+Call Now
+
+Get Directions
+
+About Section
+Short story about Singh Cake Delight.
+
+Focus on:
+
+Homemade cakes
+
+Fresh ingredients
+
+Pure eggless cakes
+
+Made with love.
+
+Products Section
+Create product cards for:
+
+Birthday Cakes
+
+Cupcakes
+
+Jar Cakes
+
+Bento Cakes
+
+Glass Cakes
+
+Each card should contain:
+
+Image
+
+Short description
+
+Order via WhatsApp button
+
+Why Choose Us
+Use icons and short text:
+
+100% Homemade Cakes
+
+Pure Eggless
+
+Fresh Ingredients
+
+5 Star Rated
+
+Made With Love
+
+Cake Gallery
+Create a beautiful gallery grid displaying cake photos.
+
+Gallery features:
+
+hover effects
+lightbox preview
+masonry style grid
+Customer Reviews
+Display Google style reviews from customers.
+
+How To Order
+Simple 3 steps:
+
+Step 1
+
+Contact us on WhatsApp or call.
+
+Step 2
+
+Customize your cake.
+
+Step 3
+
+Pick up from the shop.
+
+Instagram Feed
+Embed Instagram posts showing cake photos.
+
+Google Maps Section
+Embed Google Maps showing the shop location.
+
+Contact Section
+Show:
+Phone number
+
+Address
+
+Opening hours
+
+Instagram link
+
+Add buttons:
+
+Call Now
+
+Open in Google Maps
+
+Footer
+Include:
+Quick links
+
+Contact details
+
+Instagram
+
+Copyright
+
+Singh Cake Delight
+
+Extra Conversion Features
+
+Floating WhatsApp Order Button
+
+Floating Call Button
+
+Sticky Navigation Bar
+
+Instagram cake feed
+
+Mobile friendly layout
+
+SEO optimized headings
+
+Fast loading images
+
+Technical Requirements
+
+Generate full code using:
+
+HTML
+
+CSS
+
+JavaScript
+
+Folder structure:
+
+/website
+
+index.html
+
+/css
+
+      styles.css
+/js
+
+      script.js
+/images
+
+Make the website visually premium like a modern bakery brand and optimized to attract local cake customers.

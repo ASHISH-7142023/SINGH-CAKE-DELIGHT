@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { Menu, X, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { CakeThemeToggle } from "./CakeThemeToggle";
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -67,8 +68,9 @@ export function Navbar() {
                 {link.name}
               </a>
             ))}
+            <CakeThemeToggle />
             <Button 
-              className="rounded-full shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all hover:-translate-y-0.5 ml-2"
+              className="rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 hover:shadow-xl hover:shadow-red-600/30 transition-all hover:-translate-y-0.5 ml-2"
               onClick={() => window.open('tel:+919658181860')}
             >
               <PhoneCall className="w-4 h-4 mr-2" />

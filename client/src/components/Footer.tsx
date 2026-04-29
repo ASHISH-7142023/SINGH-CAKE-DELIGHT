@@ -1,4 +1,5 @@
-import { MapPin, Phone, Clock, Instagram, Heart } from "lucide-react";
+import { MapPin, Clock, Heart } from "lucide-react";
+import { FaInstagram, FaPhoneAlt, FaWhatsapp } from "react-icons/fa";
 
 export function Footer() {
   return (
@@ -21,11 +22,29 @@ export function Footer() {
             </p>
             <div className="flex gap-4">
               <a 
-                href="#" 
+                href="https://instagram.com/singh_cake_delight" 
+                target="_blank"
+                rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-foreground transition-colors"
                 aria-label="Instagram"
               >
-                <Instagram className="w-5 h-5" />
+                <FaInstagram className="w-5 h-5" />
+              </a>
+              <a 
+                href="https://wa.me/919658181860" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-colors"
+                aria-label="WhatsApp"
+              >
+                <FaWhatsapp className="w-5 h-5" />
+              </a>
+              <a 
+                href="tel:+919658181860"
+                className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-foreground transition-colors"
+                aria-label="Call Us"
+              >
+                <FaPhoneAlt className="w-4 h-4" />
               </a>
             </div>
           </div>
@@ -42,7 +61,7 @@ export function Footer() {
                 </span>
               </li>
               <li className="flex gap-3 items-center">
-                <Phone className="w-5 h-5 text-primary shrink-0" />
+                <FaPhoneAlt className="w-4 h-4 text-primary shrink-0" />
                 <a href="tel:+919658181860" className="text-background/80 hover:text-primary transition-colors">
                   +91 96581 81860
                 </a>

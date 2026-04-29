@@ -1,17 +1,17 @@
-import { pgTable, text, serial } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const products = pgTable("products", {
-  id: serial("id").primaryKey(),
+export const products = sqliteTable("products", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   description: text("description").notNull(),
   imageUrl: text("image_url").notNull(),
   category: text("category").notNull(), 
 });
 
-export const galleryImages = pgTable("gallery_images", {
-  id: serial("id").primaryKey(),
+export const galleryImages = sqliteTable("gallery_images", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
   imageUrl: text("image_url").notNull(),
   altText: text("alt_text").notNull(),
 });

@@ -113,3 +113,16 @@
     transform: translate(-50%, -50%) scale(1);
   }
 }
+
+/* Cake Theme Toggle */
+.cake-toggle {
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.cake-toggle:hover {
+  filter: brightness(1.08);
+}
+.cake-toggle:active {
+  transform: scale(0.95);
+}
