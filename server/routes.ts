@@ -35,14 +35,14 @@ export async function registerRoutes(
       if (existingProducts.length === 0) {
         // Row 1
         await storage.createProduct({ name: "Butterscotch Cake", description: "Smooth butterscotch flavored sponge with crunchy praline topping and creamy frosting.", imageUrl: "Butterscotch-og-cake.jpeg", category: "Butterscotch Cake" });
-        await storage.createProduct({ name: "Truffle Cake", description: "Ultimate chocolate indulgence with premium dark chocolate ganache and truffle finish.", imageUrl: "Truffle_Cake.jpeg", category: "Truffle Cake" });
-        await storage.createProduct({ name: "Strawberry Cake", description: "Fresh strawberry sponge cake with real strawberry compote and whipped cream.", imageUrl: "Strawberry Cake.jpeg", category: "Strawberry Cake" });
-        await storage.createProduct({ name: "Cupcakes", description: "Soft eggless cupcakes in 6 flavors: Chocolate, Vanilla, and Strawberry Frostings. Perfect for parties!", imageUrl: "cup-cake2.jpeg", category: "Cupcake" });
-        // Row 2
         await storage.createProduct({ name: "Vanilla Cake", description: "Classic soft and fluffy eggless vanilla sponge with rich cream frosting.", imageUrl: "Vanilla-Cake.jpeg", category: "Vanilla Cake" });
         await storage.createProduct({ name: "Chocolate Cake", description: "Decadent eggless chocolate cake with layers of rich chocolate ganache.", imageUrl: "Chocolate_Cake.png", category: "Chocolate Cake" });
-        await storage.createProduct({ name: "Rasmalai Cake", description: "Unique fusion cake inspired by the classic Rasmalai, topped with pistachios and saffron cream.", imageUrl: "Rasmalai-Cake.jpeg", category: "Rasmalai Cake" });
         await storage.createProduct({ name: "Black Forest Cake", description: "Layers of chocolate sponge, cherry filling, whipped cream, and chocolate shavings.", imageUrl: "Black-forest-Cake.jpeg", category: "Black Forest Cake" });
+        await storage.createProduct({ name: "Strawberry Cake", description: "Fresh strawberry sponge cake with real strawberry compote and whipped cream.", imageUrl: "Strawberry Cake.jpeg", category: "Strawberry Cake" });
+        await storage.createProduct({ name: "Rasmalai Cake", description: "Unique fusion cake inspired by the classic Rasmalai, topped with pistachios and saffron cream.", imageUrl: "Rasmalai-Cake.jpeg", category: "Rasmalai Cake" });
+        // Row 2
+        await storage.createProduct({ name: "Truffle Cake", description: "Ultimate chocolate indulgence with premium dark chocolate ganache and truffle finish.", imageUrl: "Truffle_Cake.jpeg", category: "Truffle Cake" });
+        await storage.createProduct({ name: "Cupcakes", description: "Soft eggless cupcakes in 6 flavors: Chocolate, Vanilla, and Strawberry Frostings. Perfect for parties!", imageUrl: "cup-cake2.jpeg", category: "Cupcake" });
         // Row 3 - Specialty
         await storage.createProduct({ name: "Glass Cake", description: "Elegant layered cake served in a glass — a beautiful and delicious treat.", imageUrl: "Glass-Cake.jpeg", category: "Specialty" });
         await storage.createProduct({ name: "Candy Bites", description: "Irresistible chocolate candy bites — perfect for gifting and snacking.", imageUrl: "Chocolate Candy Bites.jpeg", category: "Specialty" });

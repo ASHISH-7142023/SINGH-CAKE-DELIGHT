@@ -9,64 +9,64 @@
     --font-display: 'Playfair Display', serif;
     --font-body: 'DM Sans', sans-serif;
 
-    /* Soft Cream / Warm Bakery Palette */
-    --background: 40 33% 98%;      /* Soft off-white/cream */
-    --foreground: 12 25% 20%;      /* Chocolate brown */
+    /* Fresh Ocean & Mint Cake Palette */
+    --background: 204 30% 97%;      /* Soft fresh light blue/ice tint */
+    --foreground: 204 82% 13%;      /* Deep dark navy text */
     
-    --card: 0 0% 100%;
-    --card-foreground: 12 25% 20%;
+    --card: 0 0% 100%;              /* Clean white cards */
+    --card-foreground: 204 82% 13%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 12 25% 20%;
+    --popover-foreground: 204 82% 13%;
     
-    --primary: 345 80% 85%;        /* Soft pastel pink */
-    --primary-foreground: 12 30% 15%; /* Dark brown text on pink */
+    --primary: 202 44% 41%;        /* Steel Blue (#3B7597) */
+    --primary-foreground: 0 0% 100%;/* White text on steel blue */
     
-    --secondary: 25 35% 90%;       /* Warm beige */
-    --secondary-foreground: 12 25% 20%;
+    --secondary: 184 55% 92%;      /* Soft pastel aqua (#EBF9FA) */
+    --secondary-foreground: 204 82% 20%;
     
-    --muted: 40 20% 92%;
-    --muted-foreground: 12 10% 45%;
+    --muted: 204 20% 93%;
+    --muted-foreground: 204 25% 45%;
     
-    --accent: 38 90% 75%;          /* Soft gold / caramel */
-    --accent-foreground: 12 25% 20%;
+    --accent: 168 93% 67%;          /* Bright Mint/Turquoise (#5DF8D8) */
+    --accent-foreground: 204 82% 13%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 20% 85%;
-    --input: 30 20% 85%;
-    --ring: 345 80% 85%;
+    --border: 204 30% 90%;
+    --input: 204 30% 90%;
+    --ring: 202 44% 41%;
 
     --radius: 1rem;
   }
 
   .dark {
-    /* Bakery theme leans light, but dark mode gracefully defaults to rich chocolate */
-    --background: 12 25% 12%;      /* Deep dark chocolate */
-    --foreground: 40 33% 96%;      /* Cream text */
+    /* Dark Mode grace: Deep dark ocean and mint highlights */
+    --background: 204 70% 8%;       /* Very deep dark navy */
+    --foreground: 204 40% 94%;      /* Soft ice-blue text */
     
-    --card: 12 25% 15%;
-    --card-foreground: 40 33% 96%;
+    --card: 204 60% 12%;            /* Slate dark navy card */
+    --card-foreground: 204 40% 94%;
     
-    --popover: 12 25% 15%;
-    --popover-foreground: 40 33% 96%;
+    --popover: 204 60% 12%;
+    --popover-foreground: 204 40% 94%;
     
-    --primary: 345 60% 65%;        /* Deeper dusty rose */
-    --primary-foreground: 12 25% 12%;
+    --primary: 202 55% 50%;        /* Brighter steel blue */
+    --primary-foreground: 0 0% 100%;
     
-    --secondary: 12 20% 22%;
-    --secondary-foreground: 40 33% 96%;
+    --secondary: 204 40% 18%;
+    --secondary-foreground: 204 40% 94%;
     
-    --muted: 12 15% 20%;
-    --muted-foreground: 30 15% 70%;
+    --muted: 204 30% 15%;
+    --muted-foreground: 204 20% 70%;
     
-    --accent: 38 70% 55%;
-    --accent-foreground: 12 25% 12%;
+    --accent: 168 85% 55%;          /* Vibrant mint */
+    --accent-foreground: 204 80% 10%;
     
-    --border: 12 15% 25%;
-    --input: 12 15% 25%;
-    --ring: 345 60% 65%;
+    --border: 204 35% 18%;
+    --input: 204 35% 18%;
+    --ring: 202 55% 50%;
   }
 }
 

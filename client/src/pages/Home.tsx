@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
   Cake, ShieldCheck, Leaf, Star, CheckCircle2, 
-  MessageCircle, Navigation, Heart, ChevronRight, X, Instagram, MapPin
+  MessageCircle, Navigation, Heart, ChevronsRight, X, Instagram, MapPin
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useGallery } from "@/hooks/use-gallery";
@@ -205,20 +205,76 @@ export default function Home() {
       </section>
 
       {/* HOW TO ORDER */}
-      <section className="py-24 bg-primary text-primary-foreground relative overflow-hidden">
-        {/* Decorative elements */}
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-white/10 blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-80 h-80 rounded-full bg-white/10 blur-3xl"></div>
+      <section className="py-24 bg-[#F2E6DF] dark:bg-[#20130d] text-[#2D1E17] dark:text-[#F2E6DF] relative overflow-hidden transition-colors duration-300">
+        {/* Background Decorative SVGs */}
+        {/* Top-Left Swirl */}
+        <div className="absolute top-0 left-0 w-72 h-72 opacity-25 dark:opacity-10 pointer-events-none select-none">
+          <svg className="w-full h-full text-[#a67c65]" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="1.2">
+            <path d="M 10,10 C 50,10 80,30 90,60 C 95,80 85,95 75,95 C 65,95 55,85 60,70 C 65,50 90,40 110,60 C 130,80 120,110 100,120 C 80,130 60,110 60,90 C 60,70 80,60 95,75" />
+            <path d="M 10,40 C 40,40 60,50 70,70 C 75,80 70,90 60,90 C 50,90 45,80 48,70 C 52,55 70,50 85,65 C 100,80 90,100 80,105 C 70,110 55,100 55,85" />
+            <path d="M 10,80 C 30,80 40,90 40,100 C 40,105 35,110 30,110 C 25,110 20,105 22,98 C 25,90 35,90 42,98" />
+          </svg>
+        </div>
+        
+        {/* Bottom-Left Swirl (Flipped/Rotated) */}
+        <div className="absolute bottom-0 left-0 w-72 h-72 opacity-25 dark:opacity-10 pointer-events-none select-none transform scale-y-[-1]">
+          <svg className="w-full h-full text-[#a67c65]" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="1.2">
+            <path d="M 10,10 C 50,10 80,30 90,60 C 95,80 85,95 75,95 C 65,95 55,85 60,70 C 65,50 90,40 110,60 C 130,80 120,110 100,120 C 80,130 60,110 60,90 C 60,70 80,60 95,75" />
+            <path d="M 10,40 C 40,40 60,50 70,70 C 75,80 70,90 60,90 C 50,90 45,80 48,70 C 52,55 70,50 85,65 C 100,80 90,100 80,105 C 70,110 55,100 55,85" />
+            <path d="M 10,80 C 30,80 40,90 40,100 C 40,105 35,110 30,110 C 25,110 20,105 22,98 C 25,90 35,90 42,98" />
+          </svg>
+        </div>
+
+        {/* Top-Right Utensils */}
+        <div className="absolute top-0 right-0 w-80 h-80 opacity-25 dark:opacity-10 pointer-events-none select-none">
+          <svg className="w-full h-full text-[#a67c65]" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            {/* Rolling pin tilted */}
+            <g transform="rotate(-30 130 60)">
+              <path d="M 80,57 C 75,57 75,63 80,63 L 90,63 L 90,57 Z" />
+              <rect x="90" y="52" width="70" height="16" rx="2" />
+              <path d="M 160,57 L 170,57 C 175,57 175,63 170,63 Z" />
+            </g>
+            {/* Mixing bowl */}
+            <path d="M 110,120 C 110,150 160,150 160,120 L 165,110 L 105,110 Z" />
+            <path d="M 125,110 L 115,90" />
+            {/* Swirls */}
+            <path d="M 170,170 C 150,180 130,170 120,150 C 115,140 120,130 130,130 C 140,130 145,140 140,150" />
+          </svg>
+        </div>
+
+        {/* Bottom-Right Utensils & Sparkles */}
+        <div className="absolute bottom-0 right-0 w-80 h-80 opacity-25 dark:opacity-10 pointer-events-none select-none">
+          <svg className="w-full h-full text-[#a67c65]" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            {/* Whisk */}
+            <g transform="rotate(45 80 120)">
+              <rect x="77" y="130" width="6" height="30" rx="1" />
+              <path d="M 80,130 C 70,110 70,80 80,75 C 90,80 90,110 80,130" />
+              <path d="M 80,130 C 75,110 75,85 80,80 C 85,85 85,110 80,130" />
+              <path d="M 80,130 C 65,110 65,90 80,85 C 95,90 95,110 80,130" />
+            </g>
+            {/* Rolling pin */}
+            <g transform="translate(40, 60) rotate(15)">
+              <path d="M 20,40 L 30,40" />
+              <rect x="30" y="35" width="80" height="10" rx="1" />
+              <path d="M 110,40 L 120,40" />
+            </g>
+            {/* Pastry board / line */}
+            <path d="M 10,140 C 30,150 40,130 60,140" />
+            {/* Sparkles */}
+            <path d="M 150,80 L 153,70 L 156,80 L 166,83 L 156,86 L 153,96 L 150,86 L 140,83 Z" fill="currentColor" opacity="0.3" />
+            <path d="M 120,40 L 122,35 L 124,40 L 129,42 L 124,44 L 122,49 L 120,44 L 115,42 Z" fill="currentColor" opacity="0.3" />
+          </svg>
+        </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold mb-6">How to Order</h2>
-            <p className="text-primary-foreground/80 text-lg max-w-2xl mx-auto">Ordering your custom cake is as easy as 1-2-3.</p>
+            <h2 className="font-display text-4xl md:text-5xl font-bold mb-6 text-[#2D1E17] dark:text-[#F2E6DF]">How to Order</h2>
+            <p className="text-[#5C4338] dark:text-[#D4BCAE] text-lg max-w-2xl mx-auto">Ordering your custom cake is as easy as 1-2-3.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 relative">
             {/* Connecting line for desktop */}
-            <div className="hidden md:block absolute top-1/2 left-1/6 right-1/6 h-0.5 bg-primary-foreground/20 -translate-y-1/2 z-0"></div>
+            <div className="hidden md:block absolute top-10 left-[15%] right-[15%] h-0.5 bg-[#B68D75]/20 dark:bg-[#986E55]/30 z-0"></div>
 
             {[
               { step: "01", title: "Reach Out", desc: "Message us on WhatsApp or call us to share your requirements and date." },
@@ -233,11 +289,17 @@ export default function Home() {
                 transition={{ delay: i * 0.2, duration: 0.5 }}
                 className="relative z-10 flex flex-col items-center text-center px-4"
               >
-                <div className="w-20 h-20 rounded-full bg-background text-primary flex items-center justify-center font-display font-bold text-3xl mb-6 shadow-xl border-4 border-primary">
+                {/* 3D Glassmorphic / Metallic circular badge */}
+                <div 
+                  className="w-20 h-20 rounded-full flex items-center justify-center font-display font-bold text-3xl mb-6 relative z-10 text-white border-4 border-[#C39B84] dark:border-[#986E55] shadow-[0_10px_25px_-5px_rgba(142,98,72,0.4),_inset_0_2px_3px_rgba(255,255,255,0.6),_0_0_15px_rgba(212,163,135,0.3)] dark:shadow-[0_10px_25px_-5px_rgba(0,0,0,0.6),_inset_0_2px_3px_rgba(255,255,255,0.2),_0_0_15px_rgba(195,155,132,0.1)] transition-transform duration-300 hover:scale-105"
+                  style={{
+                    background: 'linear-gradient(135deg, #D4A387 0%, #A07055 50%, #704732 100%)',
+                  }}
+                >
                   {item.step}
                 </div>
-                <h3 className="font-display font-bold text-2xl mb-3">{item.title}</h3>
-                <p className="text-primary-foreground/80">{item.desc}</p>
+                <h3 className="font-display font-bold text-2xl mb-3 text-[#2D1E17] dark:text-[#F2E6DF]">{item.title}</h3>
+                <p className="text-[#5C4338] dark:text-[#D4BCAE] leading-relaxed max-w-sm">{item.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -246,9 +308,9 @@ export default function Home() {
             <Button 
               size="lg"
               onClick={() => handleOrder()}
-              className="bg-background text-primary hover:bg-background/90 rounded-full px-8 py-6 text-lg font-bold shadow-xl"
+              className="bg-[#241812] text-[#E6C5A3] hover:bg-[#322219] hover:text-white dark:bg-[#E6C5A3] dark:text-[#241812] dark:hover:bg-[#f2d8bd] dark:hover:text-black rounded-full px-10 py-7 text-lg font-bold shadow-[0_10px_25px_rgba(36,24,18,0.3)] dark:shadow-[0_10px_25px_rgba(0,0,0,0.4)] transition-all duration-300 hover:shadow-[0_15px_30px_rgba(36,24,18,0.4)] hover:-translate-y-0.5 flex items-center justify-center gap-2 mx-auto"
             >
-              Start Your Order <ChevronRight className="ml-2 w-5 h-5" />
+              Start Your Order <ChevronsRight className="ml-1 w-5 h-5 text-[#E6C5A3] dark:text-[#241812]" />
             </Button>
           </div>
         </div>
