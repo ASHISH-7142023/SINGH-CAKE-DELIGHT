@@ -10,7 +10,7 @@
     --font-body: 'DM Sans', sans-serif;
 
     /* Soft Cream / Warm Bakery Palette */
-    --background: 40 33% 98%;      /* Soft off-white/cream */
+    --background: 45.6 100% 95.1%;  /* #FFF9E6 (Cream-Yellow) */
     --foreground: 12 25% 20%;      /* Chocolate brown */
     
     --card: 0 0% 100%;
@@ -125,4 +125,39 @@
 }
 .cake-toggle:active {
   transform: scale(0.95);
+}
+
+/* Custom cake cursor style */
+html, body {
+  cursor: url('/cursor_cake.png') 4 4, auto;
+}
+
+/* General overrides for elements that should definitely use the custom cursor */
+a, button, select, [role="button"], .cursor-pointer, .cake-toggle, button * {
+  cursor: url('/cursor_cake.png') 4 4, pointer !important;
+}
+
+/* Keep standard usability cursors where they matter (text input, grab/dragging, disabled states) */
+input[type="text"], input[type="email"], input[type="search"], input[type="tel"], textarea, [contenteditable="true"] {
+  cursor: text;
+}
+:disabled, .cursor-not-allowed {
+  cursor: not-allowed;
+}
+
+
+/* Floating cake particle animation */
+@keyframes floatUpAndFade {
+  0% {
+    transform: translate(-50%, -50%) translateY(0) scale(0.8) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) translateY(-140px) scale(0.4) rotate(45deg);
+    opacity: 0;
+  }
+}
+
+.animate-cake-float {
+  animation: floatUpAndFade 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
 }

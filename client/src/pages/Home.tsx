@@ -3,38 +3,78 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { 
   Cake, ShieldCheck, Leaf, Star, CheckCircle2, 
-  MessageCircle, Navigation, Heart, ChevronsRight, X, Instagram, MapPin
+  MessageCircle, Navigation, Heart, ChevronsRight, X, Instagram, MapPin,
+  ChevronLeft, ChevronRight
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useGallery } from "@/hooks/use-gallery";
 import { Navbar } from "@/components/Navbar";
 import { FloatingActions } from "@/components/FloatingActions";
 import { Footer } from "@/components/Footer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-// Fade in up animation variant
-const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15
-    }
-  }
-};
+import { useIsDark } from "@/hooks/use-is-dark";
 
 export default function Home() {
+  const isDark = useIsDark();
   const { data: products, isLoading: isLoadingProducts } = useProducts();
   const { data: gallery, isLoading: isLoadingGallery } = useGallery();
   
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+
+  const handlePrevImage = () => {
+    if (!gallery || selectedImageIndex === null) return;
+    setSelectedImageIndex((prev) => 
+      prev !== null && prev > 0 ? prev - 1 : gallery.length - 1
+    );
+  };
+
+  const handleNextImage = () => {
+    if (!gallery || selectedImageIndex === null) return;
+    setSelectedImageIndex((prev) => 
+      prev !== null && prev < gallery.length - 1 ? prev + 1 : 0
+    );
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (selectedImageIndex === null) return;
+      if (e.key === "ArrowLeft") {
+        handlePrevImage();
+      } else if (e.key === "ArrowRight") {
+        handleNextImage();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedImageIndex, gallery]);
 
   const WHATSAPP_NUMBER = "919658181860";
+
+  // Animation variants dynamic based on isDark
+  const fadeInUp = isDark ? {
+    hidden: { opacity: 0, y: 40 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } }
+  } : {
+    hidden: { opacity: 1, y: 0 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0 } }
+  };
+
+  const staggerContainer = isDark ? {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15
+      }
+    }
+  } : {
+    hidden: { opacity: 1 },
+    visible: {
+      opacity: 1,
+      transition: { duration: 0 }
+    }
+  };
   
   const handleOrder = (productName?: string) => {
     const text = productName 
@@ -56,7 +96,7 @@ export default function Home() {
           <img 
             src="https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=2070&auto=format&fit=crop" 
             alt="Gorgeous beautifully decorated cake"
-            className="w-full h-full object-cover scale-105 transform animate-[pulse_20s_ease-in-out_infinite_alternate]"
+            className={`w-full h-full object-cover ${isDark ? "scale-105 transform animate-[pulse_20s_ease-in-out_infinite_alternate]" : ""}`}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-foreground/90 via-foreground/60 to-transparent dark:from-[#2a1810]/85 dark:via-[#3d261c]/60 dark:to-transparent"></div>
         </div>
@@ -66,7 +106,7 @@ export default function Home() {
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            className="max-w-2xl text-white ml-auto text-right transition-all duration-700"
+            className={`max-w-2xl text-white mr-auto text-left ${isDark ? "transition-all duration-700" : ""}`}
           >
             <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 backdrop-blur-md border border-primary/30 mb-6">
               <Star className="w-4 h-4 text-primary fill-primary" />
@@ -74,24 +114,29 @@ export default function Home() {
             </motion.div>
             
             <motion.h1 variants={fadeInUp} className="text-5xl md:text-7xl font-display font-bold leading-tight mb-6 text-balance">
-              Delight In <span className="text-primary italic">Every Bite</span> 🎂
+              Delight In <span className="text-primary italic">Every Bite</span>{" "}
+              <img src="/new_cake.png" alt="Cake Icon" className="w-12 h-12 md:w-16 md:h-16 inline-block align-middle ml-2" />
             </motion.h1>
             
             <motion.p variants={fadeInUp} className="text-lg md:text-xl text-white/90 mb-10 text-balance leading-relaxed">
               100% Homemade, Pure Eggless Cakes crafted with premium ingredients and lots of love. Experience the perfect celebration centerpiece.
             </motion.p>
             
-            <motion.div variants={fadeInUp} className="flex flex-wrap gap-4">
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
               <Button 
                 onClick={() => handleOrder()}
-                className="bg-[#25D366] hover:bg-[#1fb855] text-white rounded-full px-7 py-5 text-base font-semibold shadow-lg shadow-[#25D366]/25 hover:shadow-xl transition-all hover:-translate-y-1"
+                className={`w-full sm:w-auto bg-[#25D366] hover:bg-[#1fb855] text-white rounded-full px-7 py-5 text-base font-semibold ${
+                  isDark ? "shadow-lg shadow-[#25D366]/25 hover:shadow-xl transition-all hover:-translate-y-1" : ""
+                }`}
               >
                 <MessageCircle className="mr-2 w-5 h-5" />
                 WhatsApp
               </Button>
               <Button 
                 onClick={() => window.open('https://www.instagram.com/singh_cake_delight', '_blank')}
-                className="bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] hover:opacity-90 text-white rounded-full px-7 py-5 text-base font-semibold shadow-lg transition-all hover:-translate-y-1"
+                className={`w-full sm:w-auto bg-gradient-to-r from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] hover:opacity-90 text-white rounded-full px-7 py-5 text-base font-semibold ${
+                  isDark ? "shadow-lg transition-all hover:-translate-y-1" : ""
+                }`}
               >
                 <Instagram className="mr-2 w-5 h-5" />
                 Instagram
@@ -99,7 +144,9 @@ export default function Home() {
               <Button 
                 variant="outline"
                 onClick={() => window.open('https://goo.gl/maps/YourMapsLinkHere', '_blank')}
-                className="bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-7 py-5 text-base font-semibold backdrop-blur-sm transition-all hover:-translate-y-1"
+                className={`w-full sm:w-auto bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-7 py-5 text-base font-semibold backdrop-blur-sm ${
+                  isDark ? "transition-all hover:-translate-y-1" : ""
+                }`}
               >
                 <MapPin className="mr-2 w-5 h-5 text-red-400" />
                 Directions
@@ -136,8 +183,8 @@ export default function Home() {
               { icon: ShieldCheck, title: "Fresh Ingredients", desc: "No artificial preservatives, only premium quality ingredients." },
               { icon: Star, title: "Made with Love", desc: "Every cake is handcrafted uniquely for your celebration." },
             ].map((feature, i) => (
-              <motion.div key={i} variants={fadeInUp} className="bg-card p-8 rounded-2xl fancy-shadow border border-border/50 text-center group hover:-translate-y-2 transition-all duration-300">
-                <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform group-hover:bg-primary group-hover:text-primary-foreground">
+              <motion.div key={i} variants={fadeInUp} className="bg-card p-8 rounded-2xl border border-border/50 text-center fancy-shadow group hover:-translate-y-2 transition-all duration-300 cursor-pointer">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform group-hover:bg-primary group-hover:text-primary-foreground duration-300">
                   <feature.icon className="w-8 h-8" />
                 </div>
                 <h3 className="font-display font-bold text-xl mb-3 text-foreground">{feature.title}</h3>
@@ -149,7 +196,7 @@ export default function Home() {
       </section>
 
       {/* OUR PRODUCTS */}
-      <section className="py-24 bg-secondary/30" id="products">
+      <section className={`py-24 ${isDark ? "bg-secondary/30" : "bg-background"}`} id="products">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-primary font-bold tracking-wider uppercase text-sm mb-2 block">Our Menu</span>
@@ -161,30 +208,32 @@ export default function Home() {
             {isLoadingProducts ? (
               // Skeleton loading state
               Array(4).fill(0).map((_, i) => (
-                <div key={i} className="bg-card rounded-2xl p-4 fancy-shadow animate-pulse">
-                  <div className="w-full h-48 bg-muted rounded-xl mb-4"></div>
-                  <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
-                  <div className="h-4 bg-muted rounded w-full mb-2"></div>
-                  <div className="h-4 bg-muted rounded w-5/6 mb-6"></div>
-                  <div className="h-10 bg-muted rounded-full w-full"></div>
+                <div key={i} className="bg-card rounded-3xl overflow-hidden border border-border/30 dark:border-white/5 flex flex-col fancy-shadow animate-pulse">
+                  <div className="w-full aspect-square bg-muted"></div>
+                  <div className="p-6 flex flex-col flex-grow">
+                    <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                    <div className="h-4 bg-muted rounded w-full mb-2"></div>
+                    <div className="h-4 bg-muted rounded w-5/6 mb-6"></div>
+                    <div className="h-10 bg-muted rounded-full w-full"></div>
+                  </div>
                 </div>
               ))
             ) : products?.map((product) => (
               <motion.div 
                 key={product.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={isDark ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ duration: 0.5 }}
-                className="bg-card rounded-3xl overflow-hidden fancy-shadow border border-border/50 group flex flex-col"
+                transition={isDark ? { duration: 0.5 } : { duration: 0 }}
+                className="bg-card rounded-3xl overflow-hidden border border-border/30 dark:border-white/5 flex flex-col fancy-shadow group cursor-pointer"
               >
-                <div className="relative h-56 overflow-hidden">
+                <div className="relative w-full aspect-square overflow-hidden">
                   <img 
                     src={product.imageUrl} 
                     alt={product.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-foreground">
+                  <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-medium text-white tracking-wide shadow-sm">
                     {product.category}
                   </div>
                 </div>
@@ -193,7 +242,8 @@ export default function Home() {
                   <p className="text-muted-foreground text-sm flex-grow mb-6">{product.description}</p>
                   <Button 
                     onClick={() => handleOrder(product.name)}
-                    className="w-full rounded-full bg-secondary hover:bg-primary hover:text-primary-foreground text-secondary-foreground transition-colors group-hover:shadow-md"
+                    variant="outline"
+                    className="w-full rounded-full border-foreground/25 bg-transparent hover:bg-foreground hover:text-background text-foreground transition-all duration-300 font-medium py-2.5"
                   >
                     Order via WhatsApp
                   </Button>
@@ -205,10 +255,10 @@ export default function Home() {
       </section>
 
       {/* HOW TO ORDER */}
-      <section className="py-24 bg-[#F2E6DF] dark:bg-[#20130d] text-[#2D1E17] dark:text-[#F2E6DF] relative overflow-hidden transition-colors duration-300">
+      <section className={`py-24 relative overflow-hidden transition-colors duration-300 ${isDark ? "bg-[#20130d] text-[#F2E6DF]" : "bg-background text-[#2D1E17]"}`}>
         {/* Background Decorative SVGs */}
         {/* Top-Left Swirl */}
-        <div className="absolute top-0 left-0 w-72 h-72 opacity-25 dark:opacity-10 pointer-events-none select-none">
+        <div className="absolute top-0 left-0 w-72 h-72 opacity-25 dark:opacity-10 pointer-events-none select-none hidden dark:block">
           <svg className="w-full h-full text-[#a67c65]" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="1.2">
             <path d="M 10,10 C 50,10 80,30 90,60 C 95,80 85,95 75,95 C 65,95 55,85 60,70 C 65,50 90,40 110,60 C 130,80 120,110 100,120 C 80,130 60,110 60,90 C 60,70 80,60 95,75" />
             <path d="M 10,40 C 40,40 60,50 70,70 C 75,80 70,90 60,90 C 50,90 45,80 48,70 C 52,55 70,50 85,65 C 100,80 90,100 80,105 C 70,110 55,100 55,85" />
@@ -217,7 +267,7 @@ export default function Home() {
         </div>
         
         {/* Bottom-Left Swirl (Flipped/Rotated) */}
-        <div className="absolute bottom-0 left-0 w-72 h-72 opacity-25 dark:opacity-10 pointer-events-none select-none transform scale-y-[-1]">
+        <div className="absolute bottom-0 left-0 w-72 h-72 opacity-25 dark:opacity-10 pointer-events-none select-none transform scale-y-[-1] hidden dark:block">
           <svg className="w-full h-full text-[#a67c65]" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="1.2">
             <path d="M 10,10 C 50,10 80,30 90,60 C 95,80 85,95 75,95 C 65,95 55,85 60,70 C 65,50 90,40 110,60 C 130,80 120,110 100,120 C 80,130 60,110 60,90 C 60,70 80,60 95,75" />
             <path d="M 10,40 C 40,40 60,50 70,70 C 75,80 70,90 60,90 C 50,90 45,80 48,70 C 52,55 70,50 85,65 C 100,80 90,100 80,105 C 70,110 55,100 55,85" />
@@ -226,7 +276,7 @@ export default function Home() {
         </div>
 
         {/* Top-Right Utensils */}
-        <div className="absolute top-0 right-0 w-80 h-80 opacity-25 dark:opacity-10 pointer-events-none select-none">
+        <div className="absolute top-0 right-0 w-80 h-80 opacity-25 dark:opacity-10 pointer-events-none select-none hidden dark:block">
           <svg className="w-full h-full text-[#a67c65]" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             {/* Rolling pin tilted */}
             <g transform="rotate(-30 130 60)">
@@ -243,7 +293,7 @@ export default function Home() {
         </div>
 
         {/* Bottom-Right Utensils & Sparkles */}
-        <div className="absolute bottom-0 right-0 w-80 h-80 opacity-25 dark:opacity-10 pointer-events-none select-none">
+        <div className="absolute bottom-0 right-0 w-80 h-80 opacity-25 dark:opacity-10 pointer-events-none select-none hidden dark:block">
           <svg className="w-full h-full text-[#a67c65]" viewBox="0 0 200 200" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             {/* Whisk */}
             <g transform="rotate(45 80 120)">
@@ -273,9 +323,6 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 md:gap-8 relative">
-            {/* Connecting line for desktop */}
-            <div className="hidden md:block absolute top-10 left-[15%] right-[15%] h-0.5 bg-[#B68D75]/20 dark:bg-[#986E55]/30 z-0"></div>
-
             {[
               { step: "01", title: "Reach Out", desc: "Message us on WhatsApp or call us to share your requirements and date." },
               { step: "02", title: "Customize", desc: "Pick your flavor, design, and size. We'll confirm the price and details." },
@@ -283,18 +330,19 @@ export default function Home() {
             ].map((item, i) => (
               <motion.div 
                 key={i}
-                initial={{ opacity: 0, y: 30 }}
+                initial={isDark ? { opacity: 0, y: 30 } : { opacity: 1, y: 0 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.2, duration: 0.5 }}
-                className="relative z-10 flex flex-col items-center text-center px-4"
+                transition={isDark ? { delay: i * 0.2, duration: 0.5 } : { duration: 0 }}
+                className="relative z-10 flex flex-col items-center text-center px-4 group cursor-pointer"
               >
-                {/* 3D Glassmorphic / Metallic circular badge */}
+                {/* Clean dark circular badge */}
                 <div 
-                  className="w-20 h-20 rounded-full flex items-center justify-center font-display font-bold text-3xl mb-6 relative z-10 text-white border-4 border-[#C39B84] dark:border-[#986E55] shadow-[0_10px_25px_-5px_rgba(142,98,72,0.4),_inset_0_2px_3px_rgba(255,255,255,0.6),_0_0_15px_rgba(212,163,135,0.3)] dark:shadow-[0_10px_25px_-5px_rgba(0,0,0,0.6),_inset_0_2px_3px_rgba(255,255,255,0.2),_0_0_15px_rgba(195,155,132,0.1)] transition-transform duration-300 hover:scale-105"
-                  style={{
-                    background: 'linear-gradient(135deg, #D4A387 0%, #A07055 50%, #704732 100%)',
-                  }}
+                  className={`w-16 h-16 rounded-full flex items-center justify-center font-display font-bold text-2xl mb-6 relative z-10 transition-transform duration-300 group-hover:scale-110 ${
+                    isDark 
+                      ? "bg-[#1a0f0a] text-[#E6C5A3] border border-[#986E55]/30 shadow-[0_0_15px_rgba(195,155,132,0.15)]" 
+                      : "bg-[#241812] text-white shadow-lg shadow-black/10 border border-[#241812]/10"
+                  }`}
                 >
                   {item.step}
                 </div>
@@ -308,9 +356,13 @@ export default function Home() {
             <Button 
               size="lg"
               onClick={() => handleOrder()}
-              className="bg-[#241812] text-[#E6C5A3] hover:bg-[#322219] hover:text-white dark:bg-[#E6C5A3] dark:text-[#241812] dark:hover:bg-[#f2d8bd] dark:hover:text-black rounded-full px-10 py-7 text-lg font-bold shadow-[0_10px_25px_rgba(36,24,18,0.3)] dark:shadow-[0_10px_25px_rgba(0,0,0,0.4)] transition-all duration-300 hover:shadow-[0_15px_30px_rgba(36,24,18,0.4)] hover:-translate-y-0.5 flex items-center justify-center gap-2 mx-auto"
+              className={`w-full sm:w-auto max-w-sm rounded-full px-10 py-7 text-lg font-bold flex items-center justify-center gap-2 mx-auto ${
+                isDark 
+                  ? "bg-[#1a0f0a] hover:bg-[#241812] text-[#E6C5A3] border border-[#986E55]/30 shadow-[0_0_15px_rgba(195,155,132,0.15)] transition-all duration-300 hover:-translate-y-0.5" 
+                  : "bg-[#241812] hover:bg-[#322219] text-white border border-[#241812] shadow-md"
+              }`}
             >
-              Start Your Order <ChevronsRight className="ml-1 w-5 h-5 text-[#E6C5A3] dark:text-[#241812]" />
+              Start Your Order <ChevronsRight className={`ml-1 w-5 h-5 ${isDark ? "text-[#E6C5A3]" : "text-white"}`} />
             </Button>
           </div>
         </div>
@@ -335,20 +387,24 @@ export default function Home() {
             ) : gallery?.map((img, i) => (
               <motion.div 
                 key={img.id}
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={isDark ? { opacity: 0, scale: 0.9 } : { opacity: 1, scale: 1 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={{ delay: (i % 3) * 0.1 }}
-                className="relative group overflow-hidden rounded-2xl mb-4 inline-block w-full cursor-pointer break-inside-avoid shadow-sm hover:shadow-xl transition-all duration-300"
-                onClick={() => setSelectedImage(img.imageUrl)}
+                transition={isDark ? { delay: (i % 3) * 0.1 } : { duration: 0 }}
+                className={`relative overflow-hidden rounded-2xl mb-4 inline-block w-full cursor-pointer break-inside-avoid border border-border/40 ${
+                  isDark ? "group shadow-sm hover:shadow-xl transition-all duration-300" : ""
+                }`}
+                onClick={() => setSelectedImageIndex(i)}
               >
                 <img 
                   src={img.imageUrl} 
                   alt={img.altText} 
-                  className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+                  className={`w-full h-auto object-cover ${isDark ? "group-hover:scale-105 transition-transform duration-500" : ""}`}
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <div className={`absolute inset-0 bg-black/40 flex items-center justify-center ${
+                  isDark ? "opacity-0 group-hover:opacity-100 transition-opacity duration-300" : "opacity-0 hover:opacity-100"
+                }`}>
                   <span className="text-white font-medium bg-black/40 px-4 py-2 rounded-full backdrop-blur-sm">View Image</span>
                 </div>
               </motion.div>
@@ -358,7 +414,7 @@ export default function Home() {
       </section>
 
       {/* REVIEWS SECTION */}
-      <section className="py-24 bg-secondary/20 border-t border-border/30" id="reviews">
+      <section className={`py-24 border-t border-border/30 ${isDark ? "bg-secondary/20" : "bg-background"}`} id="reviews">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6">Happy Customers</h2>
@@ -376,11 +432,13 @@ export default function Home() {
             ].map((review, i) => (
               <motion.div 
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={isDark ? { opacity: 0, y: 20 } : { opacity: 1, y: 0 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-                className="bg-card p-8 rounded-3xl fancy-shadow border border-border/40 relative"
+                transition={isDark ? { delay: i * 0.15 } : { duration: 0 }}
+                className={`bg-card p-8 rounded-3xl border border-border/40 relative ${
+                  isDark ? "fancy-shadow" : ""
+                }`}
               >
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-[#FABB05] text-[#FABB05]" />)}
@@ -405,21 +463,54 @@ export default function Home() {
       <Footer />
 
       {/* Image Lightbox Dialog */}
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+      <Dialog open={selectedImageIndex !== null} onOpenChange={(open) => !open && setSelectedImageIndex(null)}>
         <DialogContent className="max-w-5xl bg-transparent border-none shadow-none p-0 flex justify-center items-center lightbox-content">
-          {selectedImage && (
-            <div className="relative">
+          {selectedImageIndex !== null && gallery && gallery[selectedImageIndex] && (
+            <div className="relative w-full max-w-4xl min-h-[50vh] min-w-[280px] sm:min-w-[500px] mx-auto flex items-center justify-center">
+              {/* Prev Button */}
               <button 
-                onClick={() => setSelectedImage(null)}
-                className="absolute -top-12 right-0 md:-right-12 text-white hover:text-primary transition-colors bg-black/20 rounded-full p-2 backdrop-blur-sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrevImage();
+                }}
+                className="absolute left-4 md:-left-16 z-50 text-white hover:text-primary transition-all bg-black/40 hover:bg-black/60 rounded-full p-3 backdrop-blur-md border border-white/20 hover:scale-105 active:scale-95"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+
+              {/* Next Button */}
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleNextImage();
+                }}
+                className="absolute right-4 md:-right-16 z-50 text-white hover:text-primary transition-all bg-black/40 hover:bg-black/60 rounded-full p-3 backdrop-blur-md border border-white/20 hover:scale-105 active:scale-95"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+
+              {/* Close Button */}
+              <button 
+                onClick={() => setSelectedImageIndex(null)}
+                className="absolute -top-12 right-4 md:right-0 text-white hover:text-primary transition-colors bg-black/20 rounded-full p-2 backdrop-blur-sm z-50"
               >
                 <X className="w-8 h-8" />
               </button>
-              <img 
-                src={selectedImage} 
-                alt="Enlarged cake view" 
-                className="max-h-[85vh] w-auto max-w-full rounded-lg shadow-2xl"
-              />
+
+              {/* Image Container */}
+              <div className="relative p-2 flex justify-center items-center overflow-hidden">
+                <motion.img 
+                  key={selectedImageIndex}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.35, ease: "easeOut" }}
+                  src={gallery[selectedImageIndex].imageUrl} 
+                  alt={gallery[selectedImageIndex].altText || "Enlarged cake view"} 
+                  className="max-h-[80vh] w-auto max-w-full rounded-lg shadow-2xl object-contain hover:scale-[1.02] transition-transform duration-500 ease-out cursor-pointer"
+                />
+              </div>
             </div>
           )}
         </DialogContent>

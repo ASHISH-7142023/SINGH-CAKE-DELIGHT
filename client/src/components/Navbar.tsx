@@ -3,8 +3,10 @@ import { Link } from "wouter";
 import { Menu, X, PhoneCall } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CakeThemeToggle } from "./CakeThemeToggle";
+import { useIsDark } from "@/hooks/use-is-dark";
 
 export function Navbar() {
+  const isDark = useIsDark();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -36,44 +38,50 @@ export function Navbar() {
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? "glass-nav py-3" : "bg-transparent py-5"
+        isScrolled ? "glass-nav py-4" : "bg-transparent py-6"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center">
           {/* Logo */}
-          <Link href="/" className="group flex items-center gap-2">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center text-primary transition-transform group-hover:scale-110">
-              <span className="text-xl">🎂</span>
+          <Link href="/" className="group flex items-center gap-3">
+            <div className={`w-12 h-12 rounded-full overflow-hidden flex items-center justify-center ${
+              isDark ? "transition-transform group-hover:scale-110" : ""
+            }`}>
+              <img src="/og_cake_og.png" alt="Singh Cake Delight" className="w-full h-full object-cover" />
             </div>
             <div className="flex flex-col">
-              <span className="font-display font-bold text-xl leading-none text-foreground tracking-wide">
+              <span className="font-display font-bold text-2xl leading-none text-foreground tracking-wide">
                 Singh Cake Delight
               </span>
-              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
+              <span className="text-xs text-muted-foreground font-medium uppercase tracking-widest mt-1">
                 Pure Eggless
               </span>
             </div>
           </Link>
 
           {/* Desktop Nav */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-10">
             {navLinks.map((link) => (
               <a
                 key={link.name}
                 href={link.href}
                 onClick={(e) => handleNavClick(e, link.href)}
-                className="text-sm font-medium text-foreground/80 hover:text-primary transition-colors relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-primary after:transition-all after:duration-300"
+                className="text-base font-medium text-foreground/80 hover:text-primary transition-colors relative after:absolute after:-bottom-1 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-primary after:transition-all after:duration-300"
               >
                 {link.name}
               </a>
             ))}
             <CakeThemeToggle />
             <Button 
-              className="rounded-full bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-600/20 hover:shadow-xl hover:shadow-red-600/30 transition-all hover:-translate-y-0.5 ml-2"
+              className={`rounded-full bg-red-600 hover:bg-red-700 text-white ml-4 h-11 px-6 text-base ${
+                isDark 
+                  ? "shadow-lg shadow-red-600/20 hover:shadow-xl hover:shadow-red-600/30 transition-all hover:-translate-y-0.5" 
+                  : ""
+              }`}
               onClick={() => window.open('tel:+919658181860')}
             >
-              <PhoneCall className="w-4 h-4 mr-2" />
+              <PhoneCall className="w-5 h-5 mr-2" />
               Call Now
             </Button>
           </nav>

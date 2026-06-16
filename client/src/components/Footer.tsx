@@ -10,8 +10,8 @@ export function Footer() {
           {/* Brand & Intro */}
           <div className="space-y-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-foreground">
-                <span className="text-xl">🎂</span>
+              <div className="w-10 h-10 rounded-full overflow-hidden flex items-center justify-center">
+                <img src="/og_cake_og.png" alt="Singh Cake Delight" className="w-full h-full object-cover" />
               </div>
               <span className="font-display font-bold text-2xl tracking-wide text-primary">
                 Singh Cake Delight
