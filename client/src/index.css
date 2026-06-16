@@ -74,6 +74,13 @@
   * {
     @apply border-border;
   }
+  html {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;     /* Firefox */
+  }
+  html::-webkit-scrollbar {
+    display: none;             /* Chrome, Safari, Opera */
+  }
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/40;
     font-family: var(--font-body);

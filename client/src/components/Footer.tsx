@@ -1,9 +1,9 @@
-import { MapPin, Clock, Heart } from "lucide-react";
+import { MapPin, Clock, Heart, Cake } from "lucide-react";
 import { FaInstagram, FaPhoneAlt, FaWhatsapp } from "react-icons/fa";
 
 export function Footer() {
   return (
-    <footer id="contact" className="bg-foreground text-background pt-20 pb-10">
+    <footer id="contact" className="bg-foreground dark:bg-[#FFF9E6] text-background pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 mb-16">
           
@@ -22,7 +22,7 @@ export function Footer() {
             </p>
             <div className="flex gap-4">
               <a 
-                href="https://instagram.com/singh_cake_delight" 
+                href="https://www.instagram.com/singh_cake_delight1981?igsh=MTV0YTRubHdoNDYxNA==" 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-foreground transition-colors"
@@ -56,8 +56,8 @@ export function Footer() {
               <li className="flex gap-3">
                 <MapPin className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <span className="text-background/80">
-                  Q/R No. - 8/5, S Colony Rd,<br/>
-                  Kansbahal, Odisha 770034
+                  Q/R No. - 8/5, South Colony Road,<br/>
+                  Kansbahal, Sundargarh, Odisha, India - 770034
                 </span>
               </li>
               <li className="flex gap-3 items-center">
@@ -80,7 +80,7 @@ export function Footer() {
             <h3 className="font-display font-semibold text-xl text-primary">Find Us</h3>
             <div className="rounded-xl overflow-hidden shadow-lg h-48 border border-white/10 relative group">
               <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d14806.911855663731!2d84.66205835!3d22.19323035!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3a201c10d7a0494d%3A0xc34a413d0fc784e1!2sKansbahal%2C%20Odisha%20770034!5e0!3m2!1sen!2sin!4v1709748612151!5m2!1sen!2sin" 
+                src="https://maps.google.com/maps?q=Singh%20Cake%20Delight%2C%20Q%2FR%20No.%20-%208%2F5%2C%20S%20Colony%20Rd%2C%20Kansbahal%2C%20Odisha%20770034&t=&z=15&ie=UTF8&iwloc=&output=embed" 
                 width="100%" 
                 height="100%" 
                 style={{ border: 0 }} 
@@ -100,7 +100,7 @@ export function Footer() {
         <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4 text-background/60 text-sm">
           <p>© {new Date().getFullYear()} Singh Cake Delight. All rights reserved.</p>
           <p className="flex items-center gap-1">
-            Made with <Heart className="w-4 h-4 text-primary fill-primary" /> in Kansbahal
+            Handcrafted <Cake className="w-5 h-5 text-primary stroke-[1.5]" /> for Customers
           </p>
         </div>
       </div>
