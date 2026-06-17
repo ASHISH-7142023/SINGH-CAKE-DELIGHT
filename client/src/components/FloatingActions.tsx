@@ -1,10 +1,10 @@
 import { MessageCircle, Phone } from "lucide-react";
 import { useIsDark } from "@/hooks/use-is-dark";
 
-export function FloatingActions() {
+export function FloatingActions({ onWhatsAppClick }: { onWhatsAppClick?: () => void }) {
   const isDark = useIsDark();
-  const WHATSAPP_URL = "https://wa.me/919658181860";
-  const PHONE_URL = "tel:+919658181860";
+  const WHATSAPP_URL = "/api/order-whatsapp";
+  const PHONE_URL = `tel:+${["91", "9438", "1315", "76"].join("")}`;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col gap-4">
@@ -24,7 +24,13 @@ export function FloatingActions() {
 
       {/* WhatsApp Button */}
       <button
-        onClick={() => window.open(WHATSAPP_URL, '_blank')}
+        onClick={() => {
+          if (onWhatsAppClick) {
+            onWhatsAppClick();
+          } else {
+            window.open(WHATSAPP_URL, '_blank');
+          }
+        }}
         className={`group relative flex items-center justify-center w-14 h-14 bg-[#25D366] text-white rounded-full ${
           isDark ? "shadow-lg shadow-[#25D366]/30 hover:shadow-xl hover:shadow-[#25D366]/40 hover:-translate-y-1 transition-all duration-300" : ""
         }`}

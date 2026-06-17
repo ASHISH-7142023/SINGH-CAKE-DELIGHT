@@ -12,15 +12,82 @@ import { Navbar } from "@/components/Navbar";
 import { FloatingActions } from "@/components/FloatingActions";
 import { Footer } from "@/components/Footer";
 import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useIsDark } from "@/hooks/use-is-dark";
 
 export default function Home() {
   const isDark = useIsDark();
+  const queryClient = useQueryClient();
   const { data: products, isLoading: isLoadingProducts } = useProducts();
   const { data: gallery, isLoading: isLoadingGallery } = useGallery();
 
   const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(null);
+
+  const [selectedOrderCake, setSelectedOrderCake] = useState<{ name: string; imageUrl?: string } | null>(null);
+  const [formName, setFormName] = useState("");
+  const [formPhone, setFormPhone] = useState("");
+  const [formDate, setFormDate] = useState("");
+  const [formTime, setFormTime] = useState("");
+  const [formNotes, setFormNotes] = useState("");
+  const [formError, setFormError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: user } = useQuery<any>({ queryKey: ["/api/me"] });
+
+  useEffect(() => {
+    if (selectedOrderCake && user) {
+      setFormName(user.name || "");
+      setFormPhone(user.phone || "");
+    }
+  }, [selectedOrderCake, user]);
+
+  const getMinPickupDate = () => {
+    const minDate = new Date();
+    minDate.setDate(minDate.getDate() + 6); // Today + 6 days
+    const yyyy = minDate.getFullYear();
+    const mm = String(minDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(minDate.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedOrderCake) return;
+    setIsSubmitting(true);
+    setFormError("");
+    try {
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          customerName: formName,
+          customerPhone: formPhone,
+          cakeName: selectedOrderCake.name,
+          cakeImage: selectedOrderCake.imageUrl || "",
+          notes: formNotes,
+          pickupDate: formDate,
+          pickupTime: formTime,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Something went wrong. Please try again.");
+      }
+      queryClient.invalidateQueries({ queryKey: ["/api/me/orders"] });
+      setFormName("");
+      setFormPhone("");
+      setFormDate("");
+      setFormTime("");
+      setFormNotes("");
+      setSelectedOrderCake(null);
+      alert("🎉 Your order request has been submitted successfully! We will contact you on WhatsApp to finalize the pickup details.");
+    } catch (err: any) {
+      setFormError(err.message || "Network error. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handlePrevImage = () => {
     if (!gallery || selectedImageIndex === null) return;
@@ -49,8 +116,6 @@ export default function Home() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedImageIndex, gallery]);
 
-  const WHATSAPP_NUMBER = "919658181860";
-
   // Animation variants dynamic based on isDark
   const fadeInUp = isDark ? {
     hidden: { opacity: 0, y: 40 },
@@ -77,30 +142,16 @@ export default function Home() {
   };
 
   const handleOrder = (productName?: string, productImage?: string) => {
-    let text = "Hi! I'd like to place an order for a cake.";
-    if (productName) {
-      const lower = productName.toLowerCase();
-      const needsCakeSuffix = !lower.includes("cake") && 
-                              !lower.includes("cupcake") && 
-                              !lower.includes("muffin") && 
-                              !lower.includes("bites") && 
-                              !lower.includes("platter") && 
-                              !lower.includes("brownies");
-      text = `Hi! I'd like to inquire about ordering the ${productName}${needsCakeSuffix ? " cake" : ""}.`;
-      if (productImage) {
-        const fullImageUrl = productImage.startsWith('http')
-          ? productImage
-          : `${window.location.origin}/${productImage}`;
-        text += `\n\nImage reference: ${fullImageUrl}`;
-      }
-    }
-    window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`, '_blank');
+    setSelectedOrderCake({
+      name: productName || "Custom Customization Inquiry",
+      imageUrl: productImage || ""
+    });
   };
 
   return (
     <div className="min-h-screen bg-background relative selection:bg-primary/30">
       <Navbar />
-      <FloatingActions />
+      <FloatingActions onWhatsAppClick={() => handleOrder()} />
 
       {/* HERO SECTION */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
@@ -198,7 +249,7 @@ export default function Home() {
               { icon: Star, title: "Made with Love", desc: "Every cake is handcrafted uniquely for your celebration." },
             ].map((feature, i) => (
               <motion.div key={i} variants={fadeInUp} className="bg-card p-8 rounded-2xl border border-border/50 text-center fancy-shadow group hover:-translate-y-2 transition-all duration-300 cursor-pointer">
-                <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform group-hover:bg-primary group-hover:text-primary-foreground duration-300">
+                <div className="mx-auto w-16 h-16 rounded-2xl bg-pink-100/80 dark:bg-primary/10 flex items-center justify-center text-pink-600 dark:text-primary mb-6 group-hover:scale-110 transition-transform group-hover:bg-primary group-hover:text-primary-foreground duration-300">
                   <feature.icon className="w-8 h-8" />
                 </div>
                 <h3 className="font-display font-bold text-xl mb-3 text-foreground">{feature.title}</h3>
@@ -213,7 +264,7 @@ export default function Home() {
       <section className={`py-24 ${isDark ? "bg-secondary/30" : "bg-background"}`} id="products">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-primary font-bold tracking-wider uppercase text-sm mb-2 block">Our Menu</span>
+            <span className="text-pink-600 dark:text-primary font-bold tracking-wider uppercase text-sm mb-2 block">Our Menu</span>
             <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-6">Signature Delights</h2>
             <p className="text-muted-foreground text-lg">Browse our most loved cake flavors. Every cake can be customized for your specific occasion and to make your day a memorable one.</p>
           </div>
@@ -385,7 +436,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
             <div>
-              <span className="text-primary font-bold tracking-wider uppercase text-sm mb-2 block">Our Work</span>
+              <span className="text-pink-600 dark:text-primary font-bold tracking-wider uppercase text-sm mb-2 block">Our Work</span>
               <h2 className="font-display text-4xl md:text-5xl font-bold text-foreground">Cake Gallery</h2>
             </div>
             <p className="text-muted-foreground max-w-md">Take a look at some of our recent custom creations. Every design is crafted with attention to detail to make your day special.</p>
@@ -458,7 +509,7 @@ export default function Home() {
                 <p className="text-foreground/80 italic mb-6 leading-relaxed">"{review.text}"</p>
                 <div className="flex items-center justify-between mt-auto">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold font-display">
+                    <div className="w-10 h-10 rounded-full bg-pink-100/85 dark:bg-primary/20 text-pink-700 dark:text-primary flex items-center justify-center font-bold font-display">
                       {review.name.charAt(0)}
                     </div>
                     <span className="font-bold text-foreground">{review.name}</span>
@@ -472,7 +523,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <Footer />
+      <Footer onWhatsAppClick={() => handleOrder()} />
 
       {/* Image Lightbox Dialog */}
       <Dialog open={selectedImageIndex !== null} onOpenChange={(open) => !open && setSelectedImageIndex(null)}>
@@ -538,6 +589,123 @@ export default function Home() {
                   </Button>
                 </div>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Web Order Form Dialog */}
+      <Dialog open={selectedOrderCake !== null} onOpenChange={(open) => !open && setSelectedOrderCake(null)}>
+        <DialogContent className="max-w-md w-full rounded-2xl p-6 bg-card border border-border text-foreground fancy-shadow max-h-[90vh] overflow-y-auto">
+          {selectedOrderCake && (
+            <div className="flex flex-col gap-5">
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-display font-bold text-2xl text-foreground">Place Order Request</h3>
+                  <p className="text-muted-foreground text-xs">Fill in your details below to request a cake booking.</p>
+                </div>
+              </div>
+
+              {/* Takeaway / Pickup Notice Callout */}
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex gap-2.5 items-start">
+                <span className="text-base leading-none">⚠️</span>
+                <div className="flex-grow space-y-1">
+                  <p className="font-bold">Pickup Only / 6-Day Advance Order Required</p>
+                  <p className="leading-relaxed opacity-95">
+                    We are a home bakery in <strong>South Colony, Kansbahal</strong>. We do <strong>NOT</strong> provide delivery. Orders must be submitted at least <strong>6 days in advance</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Selected Cake Details */}
+              {selectedOrderCake.imageUrl && (
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 border border-border/50">
+                  <img src={selectedOrderCake.imageUrl} alt={selectedOrderCake.name} className="w-12 h-12 rounded-lg object-cover" />
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Selected Item</p>
+                    <p className="font-display font-semibold text-sm text-foreground">{selectedOrderCake.name}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Order Form */}
+              <form onSubmit={handleFormSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label htmlFor="customerName" className="text-xs font-semibold text-muted-foreground">Your Name *</label>
+                  <input
+                    id="customerName"
+                    required
+                    type="text"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    placeholder="Enter your full name"
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="customerPhone" className="text-xs font-semibold text-muted-foreground">WhatsApp Phone Number *</label>
+                  <input
+                    id="customerPhone"
+                    required
+                    type="tel"
+                    value={formPhone}
+                    onChange={(e) => setFormPhone(e.target.value)}
+                    placeholder="e.g. 9438131576"
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label htmlFor="pickupDate" className="text-xs font-semibold text-muted-foreground">Pickup Date *</label>
+                    <input
+                      id="pickupDate"
+                      required
+                      type="date"
+                      min={getMinPickupDate()}
+                      value={formDate}
+                      onChange={(e) => setFormDate(e.target.value)}
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground scheme-light dark:scheme-dark"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="pickupTime" className="text-xs font-semibold text-muted-foreground">Pickup Time *</label>
+                    <input
+                      id="pickupTime"
+                      required
+                      type="time"
+                      value={formTime}
+                      onChange={(e) => setFormTime(e.target.value)}
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="notes" className="text-xs font-semibold text-muted-foreground">Special Customizations / Notes</label>
+                  <textarea
+                    id="notes"
+                    rows={3}
+                    value={formNotes}
+                    onChange={(e) => setFormNotes(e.target.value)}
+                    placeholder="Eggless flavor customizations, text written on the cake, tier requests, shape preferences, etc."
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground resize-none"
+                  />
+                </div>
+
+                {formError && (
+                  <p className="text-red-500 text-xs font-medium">{formError}</p>
+                )}
+
+                <Button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-bold py-3 rounded-full flex items-center justify-center gap-2 mt-2 shadow-lg transition-transform active:scale-95 disabled:opacity-50"
+                >
+                  {isSubmitting ? "Submitting Request..." : "Submit Pickup Order"}
+                </Button>
+              </form>
             </div>
           )}
         </DialogContent>

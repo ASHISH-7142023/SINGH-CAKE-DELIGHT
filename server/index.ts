@@ -5,8 +5,39 @@ import { createServer } from "http";
 import { db } from "./db";
 import { products, galleryImages } from "@shared/schema";
 import { sql } from "drizzle-orm";
+import helmet from "helmet";
+import { rateLimit } from "express-rate-limit";
+import { setupAuth } from "./auth";
 
 const app = express();
+app.set("trust proxy", 1);
+setupAuth(app);
+
+app.use(
+  helmet({
+    contentSecurityPolicy: process.env.NODE_ENV === "production" ? {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        imgSrc: ["'self'", "data:", "https://images.unsplash.com", "https://*.unsplash.com", "https://wa.me"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
+        connectSrc: ["'self'", "wss:", "ws:"],
+      }
+    } : false,
+  })
+);
+
+const globalApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { message: "Too many requests from this IP, please try again after 15 minutes." }
+});
+
+app.use("/api/", globalApiLimiter);
+
 const httpServer = createServer(app);
 
 declare module "http" {
@@ -75,6 +106,27 @@ app.use((req, res, next) => {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     image_url TEXT NOT NULL,
     alt_text TEXT NOT NULL
+  )`);
+  db.run(sql`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
+    phone TEXT NOT NULL,
+    password TEXT,
+    created_at TEXT NOT NULL
+  )`);
+  db.run(sql`CREATE TABLE IF NOT EXISTS orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id),
+    customer_name TEXT NOT NULL,
+    customer_phone TEXT NOT NULL,
+    cake_name TEXT,
+    cake_image TEXT,
+    notes TEXT,
+    pickup_date TEXT NOT NULL,
+    pickup_time TEXT NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL
   )`);
 
   await registerRoutes(httpServer, app);

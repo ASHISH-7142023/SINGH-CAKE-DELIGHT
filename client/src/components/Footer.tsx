@@ -1,7 +1,7 @@
 import { MapPin, Clock, Heart, Cake } from "lucide-react";
 import { FaInstagram, FaPhoneAlt, FaWhatsapp } from "react-icons/fa";
 
-export function Footer() {
+export function Footer({ onWhatsAppClick }: { onWhatsAppClick?: () => void }) {
   return (
     <footer id="contact" className="bg-foreground dark:bg-[#FFF9E6] text-background pt-20 pb-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -31,16 +31,22 @@ export function Footer() {
                 <FaInstagram className="w-5 h-5" />
               </a>
               <a 
-                href="https://wa.me/919658181860" 
+                href="/api/order-whatsapp" 
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => {
+                  if (onWhatsAppClick) {
+                    e.preventDefault();
+                    onWhatsAppClick();
+                  }
+                }}
                 className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-colors"
                 aria-label="WhatsApp"
               >
                 <FaWhatsapp className="w-5 h-5" />
               </a>
               <a 
-                href="tel:+919658181860"
+                href={`tel:+${["91", "9438", "1315", "76"].join("")}`}
                 className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-foreground transition-colors"
                 aria-label="Call Us"
               >
@@ -62,8 +68,11 @@ export function Footer() {
               </li>
               <li className="flex gap-3 items-center">
                 <FaPhoneAlt className="w-4 h-4 text-primary shrink-0" />
-                <a href="tel:+919658181860" className="text-background/80 hover:text-primary transition-colors">
-                  +91 96581 81860
+                <a 
+                  href={`tel:+${["91", "9438", "1315", "76"].join("")}`} 
+                  className="text-background/80 hover:text-primary transition-colors"
+                >
+                  +91 94381 31576
                 </a>
               </li>
               <li className="flex gap-3 items-center">

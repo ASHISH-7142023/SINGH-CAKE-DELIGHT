@@ -2,11 +2,467 @@ import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
+import { rateLimit } from "express-rate-limit";
+import { insertOrderSchema, insertUserSchema } from "@shared/schema";
+import { hashPassword, comparePasswords } from "./auth";
+import { sendEmailNotification } from "./email";
+
+declare module "express-session" {
+  interface SessionData {
+    userId: number;
+  }
+}
+
+const whatsappLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  limit: 5, // Limit each IP to 5 requests per minute
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: "Too many redirection requests. Please try again in a minute.",
+});
+
+// Helper function to escape HTML to prevent Stored XSS
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "singh123";
+
+const authAdmin = (req: any, res: any, next: any) => {
+  const token = req.headers["x-admin-password"];
+  if (token !== ADMIN_PASSWORD) {
+    return res.status(401).json({ message: "Unauthorized: Invalid password" });
+  }
+  next();
+};
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  // --- Authentication Routes ---
+
+  app.post("/api/register", async (req, res) => {
+    try {
+      const parsedBody = insertUserSchema.parse(req.body);
+      
+      const existingUser = await storage.getUserByEmail(parsedBody.email.toLowerCase().trim());
+      if (existingUser) {
+        return res.status(400).json({ message: "Email is already registered" });
+      }
+
+      let hashedPassword = null;
+      if (parsedBody.password) {
+        hashedPassword = await hashPassword(parsedBody.password);
+      }
+
+      const user = await storage.createUser({
+        name: parsedBody.name.trim(),
+        email: parsedBody.email.toLowerCase().trim(),
+        phone: parsedBody.phone.trim(),
+        password: hashedPassword,
+      });
+
+      req.session.userId = user.id;
+
+      // Send signup email
+      const emailSubject = "🍰 Welcome to Singh Cake Delight!";
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #e6c5a3; border-radius: 12px; padding: 24px;">
+          <div style="text-align: center; border-bottom: 1px solid #e6c5a3; padding-bottom: 16px; margin-bottom: 20px;">
+            <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+            <p style="margin: 4px 0 0; text-transform: uppercase; font-size: 11px; tracking-wide; color: #8a634e; font-weight: bold;">Pure Eggless Handcrafted Cakes</p>
+          </div>
+          <h2>Welcome to Singh Cake Delight, ${user.name}!</h2>
+          <p>We are absolutely thrilled to welcome you to our family. Your account has been registered successfully.</p>
+          <p>You can now browse our signature delights, place pre-orders at least 6 days in advance, and check your booking statuses and history directly from your profile drawer in the navbar.</p>
+          
+          <div style="background-color: #fcf9f5; border: 1px solid #eedecf; border-radius: 8px; padding: 14px; margin: 20px 0; font-size: 14px;">
+            <strong>Registered Account Details:</strong>
+            <ul style="margin: 8px 0 0; padding-left: 20px;">
+              <li>Name: ${user.name}</li>
+              <li>Email: ${user.email}</li>
+              <li>Phone: ${user.phone}</li>
+            </ul>
+          </div>
+          
+          <p>Best regards,<br/>Singh Cake Delight Team</p>
+        </div>
+      `;
+      sendEmailNotification(user.email, emailSubject, emailHtml).catch(console.error);
+
+      // Return user omitting password hash
+      const { password: _, ...safeUser } = user;
+      res.status(201).json(safeUser);
+    } catch (err: any) {
+      if (err.name === "ZodError") {
+        return res.status(400).json({ message: "Validation failed", errors: err.errors });
+      }
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      const user = await storage.getUserByEmail(email.toLowerCase().trim());
+      if (!user || !user.password) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      const isMatch = await comparePasswords(password, user.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      req.session.userId = user.id;
+
+      // Send login email notification
+      const emailSubject = "🔒 Singh Cake Delight - Successful Login Notification";
+      const emailHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #e6c5a3; border-radius: 12px; padding: 24px;">
+          <div style="text-align: center; border-bottom: 1px solid #e6c5a3; padding-bottom: 16px; margin-bottom: 20px;">
+            <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+          </div>
+          <h2>Successful Login Alert</h2>
+          <p>Dear ${user.name},</p>
+          <p>You have successfully logged into your account at Singh Cake Delight on ${new Date().toLocaleString()}.</p>
+          <p>If this was not you, please secure your account or reach out to us immediately.</p>
+          <br/>
+          <p>Best regards,<br/>Singh Cake Delight Team</p>
+        </div>
+      `;
+      sendEmailNotification(user.email, emailSubject, emailHtml).catch(console.error);
+
+      const { password: _, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/login-google", async (req, res) => {
+    try {
+      const { name, email, phone } = req.body;
+      if (!email || !name || !phone) {
+        return res.status(400).json({ message: "Name, email, and phone are required for Google registration" });
+      }
+
+      let user = await storage.getUserByEmail(email.toLowerCase().trim());
+      if (!user) {
+        // Create user with null password (meaning Google OAuth)
+        user = await storage.createUser({
+          name: name.trim(),
+          email: email.toLowerCase().trim(),
+          phone: phone.trim(),
+          password: null,
+        });
+
+        // Send welcome email
+        const emailSubject = "🍰 Welcome to Singh Cake Delight!";
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #e6c5a3; border-radius: 12px; padding: 24px;">
+            <div style="text-align: center; border-bottom: 1px solid #e6c5a3; padding-bottom: 16px; margin-bottom: 20px;">
+              <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+              <p style="margin: 4px 0 0; text-transform: uppercase; font-size: 11px; tracking-wide; color: #8a634e; font-weight: bold;">Pure Eggless Handcrafted Cakes</p>
+            </div>
+            <h2>Welcome to Singh Cake Delight, ${user.name}!</h2>
+            <p>You registered successfully via Google Sign-In.</p>
+            <p>You can now browse our menu, place pre-orders, and view your order history directly in your profile.</p>
+            <br/>
+            <p>Best regards,<br/>Singh Cake Delight Team</p>
+          </div>
+        `;
+        sendEmailNotification(user.email, emailSubject, emailHtml).catch(console.error);
+      } else {
+        // Send login alert
+        const emailSubject = "🔒 Login Alert";
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #e6c5a3; border-radius: 12px; padding: 24px;">
+            <h2>Successful Google Login Alert</h2>
+            <p>Dear ${user.name},</p>
+            <p>You successfully logged into your account at Singh Cake Delight via Google Sign-in on ${new Date().toLocaleString()}.</p>
+            <br/>
+            <p>Best regards,<br/>Singh Cake Delight Team</p>
+          </div>
+        `;
+        sendEmailNotification(user.email, emailSubject, emailHtml).catch(console.error);
+      }
+
+      req.session.userId = user.id;
+
+      const { password: _, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/logout", (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Failed to logout" });
+      }
+      res.clearCookie("connect.sid");
+      res.sendStatus(204);
+    });
+  });
+
+  app.get("/api/me", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+      const user = await storage.getUser(req.session.userId);
+      if (!user) {
+        req.session.destroy(() => {});
+        return res.status(401).json({ message: "User not found" });
+      }
+      const { password: _, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/me/orders", async (req, res) => {
+    if (!req.session.userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+      const orders = await storage.getOrdersByUserId(req.session.userId);
+      res.json(orders);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Public order submission
+  app.post("/api/orders", whatsappLimiter, async (req, res) => {
+    try {
+      const parsedBody = insertOrderSchema.parse(req.body);
+      
+      // Parse pickupDate manually to avoid timezone offset shifts
+      const [year, month, day] = parsedBody.pickupDate.split("-").map(Number);
+      if (isNaN(year) || isNaN(month) || isNaN(day)) {
+        return res.status(400).json({ message: "Invalid date format. Expected YYYY-MM-DD." });
+      }
+      
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const minDate = new Date(today);
+      minDate.setDate(today.getDate() + 6); // Today + 6 days
+      
+      const pickupDateObj = new Date(year, month - 1, day);
+      pickupDateObj.setHours(0, 0, 0, 0);
+      
+      if (pickupDateObj.getTime() < minDate.getTime()) {
+        return res.status(400).json({
+          message: "Orders must be placed at least 6 days in advance of the pickup date."
+        });
+      }
+      
+      // Get associated user if logged in
+      const userId = req.session.userId || null;
+      
+      // Sanitization to prevent Stored XSS
+      const sanitizedOrder = {
+        userId: userId,
+        customerName: escapeHtml(parsedBody.customerName.trim()),
+        customerPhone: escapeHtml(parsedBody.customerPhone.trim()),
+        cakeName: parsedBody.cakeName ? escapeHtml(parsedBody.cakeName.trim()) : null,
+        cakeImage: parsedBody.cakeImage ? escapeHtml(parsedBody.cakeImage.trim()) : null,
+        notes: parsedBody.notes ? escapeHtml(parsedBody.notes.trim()) : null,
+        pickupDate: escapeHtml(parsedBody.pickupDate.trim()),
+        pickupTime: escapeHtml(parsedBody.pickupTime.trim()),
+      };
+      
+      const newOrder = await storage.createOrder(sanitizedOrder);
+
+      // Fetch user email for order confirmation
+      let customerEmail: string | null = null;
+      if (userId) {
+        const user = await storage.getUser(userId);
+        if (user) {
+          customerEmail = user.email;
+        }
+      }
+
+      if (customerEmail) {
+        const emailSubject = `🍰 Singh Cake Delight - Order Request Submitted! (#${newOrder.id})`;
+        const emailHtml = `
+          <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #e6c5a3; border-radius: 12px; padding: 24px;">
+            <div style="text-align: center; border-bottom: 1px solid #e6c5a3; padding-bottom: 16px; margin-bottom: 20px;">
+              <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+              <p style="margin: 4px 0 0; text-transform: uppercase; font-size: 11px; tracking-wide; color: #8a634e; font-weight: bold;">Pure Eggless Handcrafted Cakes</p>
+            </div>
+            <h2 style="color: #2D1E17; margin-top: 0;">Order Request Submitted Successfully!</h2>
+            <p>Dear <strong>${newOrder.customerName}</strong>,</p>
+            <p>Thank you for submitting your order request. We have safely recorded your booking in our system. Here are the details:</p>
+            
+            <div style="background-color: #fcf9f5; border: 1px solid #eedecf; border-radius: 8px; padding: 16px; margin: 20px 0;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 6px 0; font-weight: bold; width: 140px;">Order ID:</td>
+                  <td style="padding: 6px 0;">#${newOrder.id}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-weight: bold;">Cake Requested:</td>
+                  <td style="padding: 6px 0;">${newOrder.cakeName || "Custom Inquiry"}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-weight: bold;">Pickup Date:</td>
+                  <td style="padding: 6px 0; color: #d946ef; font-weight: bold;">${newOrder.pickupDate}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-weight: bold;">Pickup Time:</td>
+                  <td style="padding: 6px 0;">${newOrder.pickupTime}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Notes/Requests:</td>
+                  <td style="padding: 6px 0;">${newOrder.notes || "None"}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="border-left: 4px solid #f59e0b; padding-left: 12px; margin: 20px 0;">
+              <p style="margin: 0; font-size: 13px; color: #b45309; font-weight: bold;">⚠️ TAKEAWAY ONLY</p>
+              <p style="margin: 4px 0 0; font-size: 13px; color: #78350f;">
+                We are a home bakery located at <strong>Q/R No. - 8/5, South Colony Road, Kansbahal</strong>. We do NOT provide delivery. Please remember to collect your cake on the scheduled date and time.
+              </p>
+            </div>
+
+            <p><strong>Next Steps:</strong> We will reach out to you on WhatsApp (<strong>${newOrder.customerPhone}</strong>) shortly to finalize details and confirm pricing.</p>
+            
+            <div style="border-top: 1px solid #e6c5a3; padding-top: 16px; margin-top: 24px; font-size: 12px; text-align: center; color: #8a634e;">
+              © ${new Date().getFullYear()} Singh Cake Delight. All rights reserved.<br/>
+              Kansbahal, Sundargarh, Odisha - 770034
+            </div>
+          </div>
+        `;
+        sendEmailNotification(customerEmail, emailSubject, emailHtml).catch(console.error);
+      }
+      
+      res.status(201).json(newOrder);
+    } catch (err: any) {
+      if (err.name === "ZodError") {
+        return res.status(400).json({ message: "Validation failed", errors: err.errors });
+      }
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Secure admin dashboard routes
+  app.get("/api/admin/orders", authAdmin, async (req, res) => {
+    try {
+      const allOrders = await storage.getOrders();
+      res.json(allOrders);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.patch("/api/admin/orders/:id", authAdmin, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      const { status } = req.body;
+      if (!status || typeof status !== "string") {
+        return res.status(400).json({ message: "Status is required and must be a string." });
+      }
+      const updated = await storage.updateOrderStatus(orderId, status);
+      res.json(updated);
+    } catch (err: any) {
+      console.error(err);
+      res.status(500).json({ message: err.message || "Internal server error" });
+    }
+  });
+
+  app.delete("/api/admin/orders/:id", authAdmin, async (req, res) => {
+    try {
+      const orderId = parseInt(req.params.id);
+      await storage.deleteOrder(orderId);
+      res.sendStatus(204);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/order-whatsapp", whatsappLimiter, async (req, res) => {
+    try {
+      const { name, image } = req.query;
+      const WHATSAPP_NUMBER = process.env.WHATSAPP_NUMBER || "919438131576";
+      
+      let text = "Hi! I'd like to place an order for a cake.";
+      
+      if (name) {
+        const targetName = String(name).trim();
+        
+        // Fetch all products and gallery images to validate the name input
+        const prods = await storage.getProducts();
+        const gallery = await storage.getGalleryImages();
+        
+        const isValidProduct = prods.some(
+          (p) => p.name.toLowerCase() === targetName.toLowerCase()
+        );
+        const isValidGallery = gallery.some(
+          (g) => g.altText.toLowerCase() === targetName.toLowerCase()
+        );
+        
+        if (isValidProduct || isValidGallery) {
+          const lower = targetName.toLowerCase();
+          const needsCakeSuffix = !lower.includes("cake") && 
+                                  !lower.includes("cupcake") && 
+                                  !lower.includes("muffin") && 
+                                  !lower.includes("bites") && 
+                                  !lower.includes("platter") && 
+                                  !lower.includes("brownies");
+          text = `Hi! I'd like to inquire about ordering the ${targetName}${needsCakeSuffix ? " cake" : ""}.`;
+          
+          if (image) {
+            const targetImage = String(image).trim();
+            // Verify the image URL matches the database product image or gallery image
+            const matchedProductImage = prods.find(
+              (p) => p.name.toLowerCase() === targetName.toLowerCase()
+            )?.imageUrl;
+            const matchedGalleryImage = gallery.find(
+              (g) => g.altText.toLowerCase() === targetName.toLowerCase()
+            )?.imageUrl;
+            
+            if (targetImage === matchedProductImage || targetImage === matchedGalleryImage) {
+              const fullImageUrl = targetImage.startsWith("http")
+                ? targetImage
+                : `${req.protocol}://${req.get("host")}/${targetImage}`;
+              text += `\n\nImage reference: ${fullImageUrl}`;
+            }
+          }
+        }
+      }
+      
+      res.redirect(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`);
+    } catch (err) {
+      console.error(err);
+      res.status(500).send("Internal server error");
+    }
+  });
 
   app.get(api.products.list.path, async (req, res) => {
     try {
