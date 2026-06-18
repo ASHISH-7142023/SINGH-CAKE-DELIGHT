@@ -31,6 +31,63 @@ function escapeHtml(str: string): string {
     .replace(/'/g, "&#039;");
 }
 
+// Helper function to format phone numbers to include country code (+91 by default if 10 digits)
+function formatPhoneWithCountryCode(phoneStr: string): string {
+  const trimmed = phoneStr.trim();
+  const clean = trimmed.replace(/\D/g, "");
+  
+  if (clean.length === 10) {
+    return `+91${clean}`;
+  }
+  if (clean.length === 12 && clean.startsWith("91")) {
+    return `+${clean}`;
+  }
+  
+  return trimmed.startsWith("+") ? trimmed : `+${clean}`;
+}
+
+// Helper to format 24h time to 12h format
+function formatTimeTo12Hour(timeStr: string): string {
+  if (!timeStr) return "N/A";
+  const [hoursStr, minutesStr] = timeStr.split(":");
+  const hours = parseInt(hoursStr, 10);
+  const minutes = parseInt(minutesStr, 10);
+  if (isNaN(hours) || isNaN(minutes)) return timeStr;
+  const ampm = hours >= 12 ? "pm" : "am";
+  const displayHours = hours % 12 === 0 ? 12 : hours % 12;
+  const displayMinutes = String(minutes).padStart(2, "0");
+  return `${displayHours}:${displayMinutes} ${ampm}`;
+}
+
+// Helper to format date YYYY-MM-DD to DD/MM/YYYY
+function formatDateToDDMMYYYY(dateStr: string): string {
+  if (!dateStr || !dateStr.includes("-")) return dateStr;
+  const [y, m, d] = dateStr.split("-");
+  if (y && m && d) {
+    return `${d}/${m}/${y}`;
+  }
+  return dateStr;
+}
+
+// Helper to get current Indian Standard Time string in 12-hour format
+function getIndianTimeString(): string {
+  const dateObj = new Date();
+  const datePart = dateObj.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+  const timePart = dateObj.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: true,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+  return `${datePart.replace(/-/g, "/")}, ${timePart.toLowerCase()}`;
+}
+
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "singh123";
 
 const authAdmin = (req: any, res: any, next: any) => {
@@ -65,7 +122,7 @@ export async function registerRoutes(
       const user = await storage.createUser({
         name: parsedBody.name.trim(),
         email: parsedBody.email.toLowerCase().trim(),
-        phone: parsedBody.phone.trim(),
+        phone: formatPhoneWithCountryCode(parsedBody.phone),
         password: hashedPassword,
       });
 
@@ -137,7 +194,7 @@ export async function registerRoutes(
           </div>
           <h2>Successful Login Alert</h2>
           <p>Dear ${user.name},</p>
-          <p>You have successfully logged into your account at Singh Cake Delight on ${new Date().toLocaleString()}.</p>
+          <p>You have successfully logged into your account at Singh Cake Delight on ${getIndianTimeString()}.</p>
           <p>If this was not you, please secure your account or reach out to us immediately.</p>
           <br/>
           <p>Best regards,<br/>Singh Cake Delight Team</p>
@@ -166,7 +223,7 @@ export async function registerRoutes(
         user = await storage.createUser({
           name: name.trim(),
           email: email.toLowerCase().trim(),
-          phone: phone.trim(),
+          phone: formatPhoneWithCountryCode(phone),
           password: null,
         });
 
@@ -193,7 +250,7 @@ export async function registerRoutes(
           <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #e6c5a3; border-radius: 12px; padding: 24px;">
             <h2>Successful Google Login Alert</h2>
             <p>Dear ${user.name},</p>
-            <p>You successfully logged into your account at Singh Cake Delight via Google Sign-in on ${new Date().toLocaleString()}.</p>
+            <p>You successfully logged into your account at Singh Cake Delight via Google Sign-in on ${getIndianTimeString()}.</p>
             <br/>
             <p>Best regards,<br/>Singh Cake Delight Team</p>
           </div>
@@ -281,11 +338,27 @@ export async function registerRoutes(
       // Get associated user if logged in
       const userId = req.session.userId || null;
       
+      // Validate pickup time range (7:00 AM to 8:00 PM)
+      const [pickupHour, pickupMinute] = parsedBody.pickupTime.split(":").map(Number);
+      if (isNaN(pickupHour) || isNaN(pickupMinute)) {
+        return res.status(400).json({ message: "Invalid time format. Expected HH:MM." });
+      }
+      
+      const pickupTimeMinutes = pickupHour * 60 + pickupMinute;
+      const startLimitMinutes = 7 * 60; // 7:00 AM
+      const endLimitMinutes = 20 * 60; // 8:00 PM
+      
+      if (pickupTimeMinutes < startLimitMinutes || pickupTimeMinutes > endLimitMinutes) {
+        return res.status(400).json({
+          message: "Pickup orders can only be scheduled between 7:00 AM and 8:00 PM."
+        });
+      }
+
       // Sanitization to prevent Stored XSS
       const sanitizedOrder = {
         userId: userId,
         customerName: escapeHtml(parsedBody.customerName.trim()),
-        customerPhone: escapeHtml(parsedBody.customerPhone.trim()),
+        customerPhone: formatPhoneWithCountryCode(parsedBody.customerPhone),
         cakeName: parsedBody.cakeName ? escapeHtml(parsedBody.cakeName.trim()) : null,
         cakeImage: parsedBody.cakeImage ? escapeHtml(parsedBody.cakeImage.trim()) : null,
         notes: parsedBody.notes ? escapeHtml(parsedBody.notes.trim()) : null,
@@ -303,6 +376,66 @@ export async function registerRoutes(
           customerEmail = user.email;
         }
       }
+
+      // Send email notification to official business mail
+      const businessEmail = "singhcakedelight1981.official@gmail.com";
+      const businessSubject = `🔔 New Order Received! (#${newOrder.id}) - ${newOrder.customerName}`;
+      const businessHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #d946ef; border-radius: 12px; padding: 24px;">
+          <div style="text-align: center; border-bottom: 1px solid #d946ef; padding-bottom: 16px; margin-bottom: 20px;">
+            <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+            <p style="margin: 4px 0 0; text-transform: uppercase; font-size: 11px; tracking-wide; color: #8a634e; font-weight: bold;">New Order Notification</p>
+          </div>
+          <h2 style="color: #2D1E17; margin-top: 0;">New Order Details</h2>
+          <p>A new order has been submitted through the portal. Here are the details:</p>
+          
+          <div style="background-color: #fcf9f5; border: 1px solid #eedecf; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; width: 160px; border-bottom: 1px solid #eee;">Order ID:</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #eee;">#${newOrder.id}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; border-bottom: 1px solid #eee;">Customer Name:</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #eee;">${newOrder.customerName}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; border-bottom: 1px solid #eee;">WhatsApp/Phone:</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #eee;">
+                  <a href="https://wa.me/${newOrder.customerPhone.replace(/[^0-9]/g, "")}" style="color: #25D366; font-weight: bold; text-decoration: none;">
+                    ${newOrder.customerPhone} (Chat on WhatsApp)
+                  </a>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; border-bottom: 1px solid #eee;">Customer Email:</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #eee;">${customerEmail || "Guest Order"}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; border-bottom: 1px solid #eee;">Order Item (Cake):</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #eee; font-weight: bold; color: #d946ef;">${newOrder.cakeName || "Custom Inquiry"}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; border-bottom: 1px solid #eee;">Pickup Date:</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #eee; font-weight: bold;">${formatDateToDDMMYYYY(newOrder.pickupDate)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; border-bottom: 1px solid #eee;">Pickup Time:</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #eee;">${formatTimeTo12Hour(newOrder.pickupTime)}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Customisation details:</td>
+                <td style="padding: 6px 0; white-space: pre-wrap;">${newOrder.notes || "None"}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <p style="font-size: 13px; color: #666; text-align: center; margin-top: 24px; border-top: 1px solid #eee; padding-top: 16px;">
+            To manage this and other orders, please log in to the <a href="http://localhost:3000/admin" style="color: #d946ef; font-weight: bold; text-decoration: none;">Admin Dashboard</a>.
+          </p>
+        </div>
+      `;
+      sendEmailNotification(businessEmail, businessSubject, businessHtml).catch(console.error);
 
       if (customerEmail) {
         const emailSubject = `🍰 Singh Cake Delight - Order Request Submitted! (#${newOrder.id})`;
@@ -328,11 +461,11 @@ export async function registerRoutes(
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: bold;">Pickup Date:</td>
-                  <td style="padding: 6px 0; color: #d946ef; font-weight: bold;">${newOrder.pickupDate}</td>
+                  <td style="padding: 6px 0; color: #d946ef; font-weight: bold;">${formatDateToDDMMYYYY(newOrder.pickupDate)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: bold;">Pickup Time:</td>
-                  <td style="padding: 6px 0;">${newOrder.pickupTime}</td>
+                  <td style="padding: 6px 0;">${formatTimeTo12Hour(newOrder.pickupTime)}</td>
                 </tr>
                 <tr>
                   <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Notes/Requests:</td>
@@ -388,6 +521,65 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Status is required and must be a string." });
       }
       const updated = await storage.updateOrderStatus(orderId, status);
+      
+      if (status === "completed" && updated.userId) {
+        try {
+          const customer = await storage.getUser(updated.userId);
+          if (customer && customer.email) {
+            const emailSubject = `🍰 Singh Cake Delight - Order Completed! (#${updated.id})`;
+            const emailHtml = `
+              <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #e6c5a3; border-radius: 12px; padding: 24px;">
+                <div style="text-align: center; border-bottom: 1px solid #e6c5a3; padding-bottom: 16px; margin-bottom: 20px;">
+                  <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+                  <p style="margin: 4px 0 0; text-transform: uppercase; font-size: 11px; tracking-wide; color: #8a634e; font-weight: bold;">Pure Eggless Handcrafted Cakes</p>
+                </div>
+                <h2 style="color: #2D1E17; margin-top: 0;">Your Order is Ready!</h2>
+                <p>Dear <strong>${customer.name}</strong>,</p>
+                <p>We are delighted to inform you that your cake order has been completed and is ready for pickup! Here are the pickup details:</p>
+                
+                <div style="background-color: #fcf9f5; border: 1px solid #eedecf; border-radius: 8px; padding: 16px; margin: 20px 0;">
+                  <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold; width: 140px;">Order ID:</td>
+                      <td style="padding: 6px 0;">#${updated.id}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold;">Cake:</td>
+                      <td style="padding: 6px 0;">${updated.cakeName || "Custom Inquiry"}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold;">Pickup Date:</td>
+                      <td style="padding: 6px 0; color: #d946ef; font-weight: bold;">${formatDateToDDMMYYYY(updated.pickupDate)}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold;">Pickup Time:</td>
+                      <td style="padding: 6px 0;">${formatTimeTo12Hour(updated.pickupTime)}</td>
+                    </tr>
+                  </table>
+                </div>
+
+                <div style="border-left: 4px solid #f59e0b; padding-left: 12px; margin: 20px 0;">
+                  <p style="margin: 0; font-size: 13px; color: #b45309; font-weight: bold;">⚠️ TAKEAWAY ONLY</p>
+                  <p style="margin: 4px 0 0; font-size: 13px; color: #78350f;">
+                    Please collect your cake from our home bakery at: <strong>Q/R No. - 8/5, South Colony Road, Kansbahal</strong>.
+                  </p>
+                </div>
+
+                <p>If you have any questions or need directions, feel free to contact us on WhatsApp at <strong>+919438131576</strong>.</p>
+                
+                <div style="border-top: 1px solid #e6c5a3; padding-top: 16px; margin-top: 24px; font-size: 12px; text-align: center; color: #8a634e;">
+                  © 2026 Singh Cake Delight. All rights reserved.<br/>
+                  Kansbahal, Sundargarh, Odisha - 770034
+                </div>
+              </div>
+            `;
+            sendEmailNotification(customer.email, emailSubject, emailHtml).catch(console.error);
+          }
+        } catch (emailErr) {
+          console.error("Failed to send order completion email:", emailErr);
+        }
+      }
+      
       res.json(updated);
     } catch (err: any) {
       console.error(err);

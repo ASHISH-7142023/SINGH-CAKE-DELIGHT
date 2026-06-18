@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Cake, ShieldCheck, Leaf, Star, CheckCircle2,
   MessageCircle, Navigation, Heart, ChevronsRight, X, Instagram, MapPin,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, CalendarDays
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useGallery } from "@/hooks/use-gallery";
@@ -13,6 +13,9 @@ import { FloatingActions } from "@/components/FloatingActions";
 import { Footer } from "@/components/Footer";
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format, parse } from "date-fns";
 
 import { useIsDark } from "@/hooks/use-is-dark";
 
@@ -32,6 +35,7 @@ export default function Home() {
   const [formNotes, setFormNotes] = useState("");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const { data: user } = useQuery<any>({ queryKey: ["/api/me"] });
 
@@ -54,15 +58,28 @@ export default function Home() {
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOrderCake) return;
+
+    // Validate pickup time range (7:00 AM to 8:00 PM)
+    if (formTime) {
+      const [hour, minute] = formTime.split(":").map(Number);
+      if (hour < 7 || hour > 20 || (hour === 20 && minute > 0)) {
+        setFormError("Pickup orders can only be scheduled between 7:00 AM and 8:00 PM.");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     setFormError("");
     try {
+      const cleanPhone = formPhone.trim().replace(/\D/g, "");
+      const formattedPhone = cleanPhone.length === 10 ? `+91${cleanPhone}` : (formPhone.trim().startsWith("+") ? formPhone.trim() : `+${cleanPhone}`);
+
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerName: formName,
-          customerPhone: formPhone,
+          customerPhone: formattedPhone,
           cakeName: selectedOrderCake.name,
           cakeImage: selectedOrderCake.imageUrl || "",
           notes: formNotes,
@@ -657,17 +674,41 @@ export default function Home() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label htmlFor="pickupDate" className="text-xs font-semibold text-muted-foreground">Pickup Date *</label>
-                    <input
-                      id="pickupDate"
-                      required
-                      type="date"
-                      min={getMinPickupDate()}
-                      value={formDate}
-                      onChange={(e) => setFormDate(e.target.value)}
-                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground scheme-light dark:scheme-dark"
-                    />
+                  <div className="space-y-1.5 flex flex-col justify-end">
+                    <label className="text-xs font-semibold text-muted-foreground">Pickup Date *</label>
+                    <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          type="button"
+                          className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm font-normal text-left justify-start text-foreground focus:border-primary transition-all flex items-center gap-2 h-10 hover:bg-background"
+                        >
+                          <CalendarDays className="w-4 h-4 text-muted-foreground shrink-0" />
+                          {formDate ? format(parse(formDate, "yyyy-MM-dd", new Date()), "dd/MM/yyyy") : <span className="text-muted-foreground/60">dd/mm/yyyy</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-card border border-border rounded-xl shadow-xl z-[9999]" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={formDate ? parse(formDate, "yyyy-MM-dd", new Date()) : undefined}
+                          onSelect={(date) => {
+                            if (date) {
+                              setFormDate(format(date, "yyyy-MM-dd"));
+                            } else {
+                              setFormDate("");
+                            }
+                            setIsDatePickerOpen(false);
+                          }}
+                          disabled={(date) => {
+                            const minDate = new Date();
+                            minDate.setDate(minDate.getDate() + 6);
+                            minDate.setHours(0, 0, 0, 0);
+                            return date < minDate;
+                          }}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-1.5">
                     <label htmlFor="pickupTime" className="text-xs font-semibold text-muted-foreground">Pickup Time *</label>
@@ -675,9 +716,11 @@ export default function Home() {
                       id="pickupTime"
                       required
                       type="time"
+                      min="07:00"
+                      max="20:00"
                       value={formTime}
                       onChange={(e) => setFormTime(e.target.value)}
-                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground"
+                      className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground h-10"
                     />
                   </div>
                 </div>

@@ -71,6 +71,22 @@ export function Navbar() {
     }
   };
 
+  const formatTimeTo12Hour = (timeStr: string) => {
+    try {
+      if (!timeStr) return "N/A";
+      const [hoursStr, minutesStr] = timeStr.split(":");
+      const hours = parseInt(hoursStr, 10);
+      const minutes = parseInt(minutesStr, 10);
+      if (isNaN(hours) || isNaN(minutes)) return timeStr;
+      const ampm = hours >= 12 ? "pm" : "am";
+      const displayHours = hours % 12 === 0 ? 12 : hours % 12;
+      const displayMinutes = String(minutes).padStart(2, "0");
+      return `${displayHours}:${displayMinutes} ${ampm}`;
+    } catch {
+      return timeStr;
+    }
+  };
+
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -276,7 +292,7 @@ export function Navbar() {
                           </div>
                           <div className="flex items-center gap-1.5">
                             <Clock className="w-4 h-4 text-muted-foreground shrink-0" />
-                            <span>Time: {order.pickupTime}</span>
+                            <span>Time: {formatTimeTo12Hour(order.pickupTime)}</span>
                           </div>
                         </div>
                       </div>

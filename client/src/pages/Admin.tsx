@@ -22,6 +22,31 @@ interface Order {
 
 export default function Admin() {
   const isDark = useIsDark();
+
+  const formatDateToDDMMYYYY = (dateStr: string) => {
+    if (!dateStr || !dateStr.includes("-")) return dateStr;
+    const [y, m, d] = dateStr.split("-");
+    if (y && m && d) {
+      return `${d}/${m}/${y}`;
+    }
+    return dateStr;
+  };
+
+  const formatTimeTo12Hour = (timeStr: string) => {
+    try {
+      if (!timeStr) return "N/A";
+      const [hoursStr, minutesStr] = timeStr.split(":");
+      const hours = parseInt(hoursStr, 10);
+      const minutes = parseInt(minutesStr, 10);
+      if (isNaN(hours) || isNaN(minutes)) return timeStr;
+      const ampm = hours >= 12 ? "PM" : "AM";
+      const displayHours = hours % 12 === 0 ? 12 : hours % 12;
+      const displayMinutes = String(minutes).padStart(2, "0");
+      return `${displayHours}:${displayMinutes} ${ampm}`;
+    } catch {
+      return timeStr;
+    }
+  };
   const [password, setPassword] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -138,9 +163,17 @@ export default function Admin() {
     const cleanPhone = phone.replace(/\D/g, "");
     const waPhone = cleanPhone.length === 10 ? `91${cleanPhone}` : cleanPhone;
     
+    let displayDate = pickupDate;
+    if (pickupDate && pickupDate.includes("-")) {
+      const [y, m, d] = pickupDate.split("-");
+      if (y && m && d) {
+        displayDate = `${d}/${m}/${y}`;
+      }
+    }
+    
     let message = "Hi! I received your order request from Singh Cake Delight.";
     if (cakeName) {
-      message += ` I'd love to confirm your order details for the ${cakeName} pickup on ${pickupDate}.`;
+      message += ` I'd love to confirm your order details for the ${cakeName} pickup on ${displayDate}.`;
     }
     return `https://wa.me/${waPhone}?text=${encodeURIComponent(message)}`;
   };
@@ -199,7 +232,7 @@ export default function Admin() {
     <div className="min-h-screen bg-background text-foreground pb-20">
       {/* Header */}
       <header className="border-b border-border/40 bg-card/50 backdrop-blur-md sticky top-0 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="w-full px-4 sm:px-8 lg:px-12 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-full overflow-hidden">
               <img src="/og_cake_og.png" alt="Singh Cake Delight" className="w-full h-full object-cover" />
@@ -229,7 +262,7 @@ export default function Admin() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <main className="w-full px-4 sm:px-8 lg:px-12 pt-8">
         {/* Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
           <div className="bg-card border border-border/50 rounded-2xl p-6 fancy-shadow flex items-center justify-between">
@@ -329,7 +362,7 @@ export default function Admin() {
                         <div className="font-semibold text-foreground text-base">{order.customerName}</div>
                         <div className="text-xs text-muted-foreground font-medium mt-0.5">{order.customerPhone}</div>
                         {order.customerEmail && (
-                          <div className="text-xs text-primary/80 font-medium mt-0.5">{order.customerEmail}</div>
+                          <div className="text-xs text-pink-700 dark:text-pink-300 font-medium mt-0.5">{order.customerEmail}</div>
                         )}
                       </td>
                       <td className="p-5">
@@ -346,10 +379,10 @@ export default function Admin() {
                       </td>
                       <td className="p-5">
                         <div className="font-semibold text-foreground flex items-center gap-1.5">
-                          <Calendar className="w-4 h-4 text-primary" /> {order.pickupDate}
+                          <Calendar className="w-4 h-4 text-primary" /> {formatDateToDDMMYYYY(order.pickupDate)}
                         </div>
                         <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
-                          <Clock className="w-4 h-4 text-muted-foreground" /> {order.pickupTime}
+                          <Clock className="w-4 h-4 text-muted-foreground" /> {formatTimeTo12Hour(order.pickupTime)}
                         </div>
                       </td>
                       <td className="p-5">
@@ -367,42 +400,44 @@ export default function Admin() {
                           {order.notes || <span className="text-muted-foreground/60 italic text-xs">No notes</span>}
                         </p>
                       </td>
-                      <td className="p-5 text-right space-x-2 whitespace-nowrap">
-                        <a
-                          href={getWhatsAppLink(order.customerPhone, order.cakeName, order.pickupDate)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm"
-                          title="Contact Customer via WhatsApp"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </a>
-                        
-                        {order.status === "pending" ? (
-                          <button
-                            onClick={() => handleUpdateStatus(order.id, "completed")}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors border border-amber-500/20"
-                            title="Mark Completed"
+                      <td className="p-5 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-6">
+                          <a
+                            href={getWhatsAppLink(order.customerPhone, order.cakeName, order.pickupDate)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors shadow-sm shrink-0"
+                            title="Contact Customer via WhatsApp"
                           >
-                            <CheckCircle className="w-4 h-4" />
-                          </button>
-                        ) : (
+                            <MessageCircle className="w-4 h-4" />
+                          </a>
+                          
+                          {order.status === "pending" ? (
+                            <button
+                              onClick={() => handleUpdateStatus(order.id, "completed")}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/10 text-amber-500 hover:bg-amber-500 hover:text-white transition-colors border border-amber-500/20 shrink-0"
+                              title="Mark Completed"
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleUpdateStatus(order.id, "pending")}
+                              className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-muted-foreground hover:bg-muted transition-colors border border-border shrink-0"
+                              title="Mark Pending"
+                            >
+                              <Clock className="w-4 h-4" />
+                            </button>
+                          )}
+                          
                           <button
-                            onClick={() => handleUpdateStatus(order.id, "pending")}
-                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-muted-foreground hover:bg-muted transition-colors border border-border"
-                            title="Mark Pending"
+                            onClick={() => handleDeleteOrder(order.id)}
+                            className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all border border-red-500/20 shrink-0"
+                            title="Delete Order Request"
                           >
-                            <Clock className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
-                        )}
-                        
-                        <button
-                          onClick={() => handleDeleteOrder(order.id)}
-                          className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all border border-red-500/20"
-                          title="Delete Order Request"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -96,11 +96,13 @@ export default function Auth() {
     if (isLogin) {
       loginMutation.mutate({ email, password });
     } else {
-      if (phone.length < 10) {
+      const cleanPhone = phone.trim().replace(/\D/g, "");
+      if (cleanPhone.length < 10) {
         setFormError("Phone number must be at least 10 digits");
         return;
       }
-      registerMutation.mutate({ name, email, phone, password });
+      const formattedPhone = cleanPhone.length === 10 ? `+91${cleanPhone}` : (phone.trim().startsWith("+") ? phone.trim() : `+${cleanPhone}`);
+      registerMutation.mutate({ name, email, phone: formattedPhone, password });
     }
   };
 
@@ -111,15 +113,17 @@ export default function Auth() {
 
   const handleGoogleSubmit = () => {
     if (!selectedGoogleAccount) return;
-    if (googlePhone.length < 10) {
+    const cleanPhone = googlePhone.trim().replace(/\D/g, "");
+    if (cleanPhone.length < 10) {
       alert("Please enter a valid 10-digit WhatsApp number to continue");
       return;
     }
+    const formattedPhone = cleanPhone.length === 10 ? `+91${cleanPhone}` : (googlePhone.trim().startsWith("+") ? googlePhone.trim() : `+${cleanPhone}`);
     setIsGoogleModalOpen(false);
     googleMutation.mutate({
       name: selectedGoogleAccount.name,
       email: selectedGoogleAccount.email,
-      phone: googlePhone,
+      phone: formattedPhone,
     });
   };
 

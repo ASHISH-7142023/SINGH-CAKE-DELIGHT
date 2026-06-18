@@ -45,7 +45,21 @@ export async function sendEmailNotification(to: string, subject: string, html: s
 }
 
 async function logEmailToAuditFile(to: string, subject: string, html: string): Promise<void> {
-  const timestamp = new Date().toISOString();
+  const dateObj = new Date();
+  const datePart = dateObj.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+  const timePart = dateObj.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: true,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+  const timestamp = `${datePart.replace(/-/g, "/")}, ${timePart.toLowerCase()}`;
   const rawText = html.replace(/<[^>]*>/g, ""); // Strip HTML tags for clean text reading
   
   const emailLogEntry = `
