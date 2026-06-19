@@ -6,6 +6,40 @@ import { rateLimit } from "express-rate-limit";
 import { insertOrderSchema, insertUserSchema } from "@shared/schema";
 import { hashPassword, comparePasswords } from "./auth";
 import { sendEmailNotification } from "./email";
+import fs from "fs";
+import path from "path";
+
+// Helper function to update ADMIN_PASSWORD in .env file and process.env
+function updateAdminPasswordInEnv(newPassword: string) {
+  try {
+    const envPath = path.resolve(process.cwd(), ".env");
+    let content = "";
+    if (fs.existsSync(envPath)) {
+      content = fs.readFileSync(envPath, "utf-8");
+    }
+    
+    const lines = content.split(/\r?\n/);
+    let updated = false;
+    const newLines = lines.map(line => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("ADMIN_PASSWORD=")) {
+        updated = true;
+        return `ADMIN_PASSWORD=${newPassword}`;
+      }
+      return line;
+    });
+    
+    if (!updated) {
+      newLines.push(`ADMIN_PASSWORD=${newPassword}`);
+    }
+    
+    fs.writeFileSync(envPath, newLines.join("\n"), "utf-8");
+    process.env.ADMIN_PASSWORD = newPassword;
+    console.log("[ENV] Updated ADMIN_PASSWORD in .env file and memory.");
+  } catch (err) {
+    console.error("[ENV] Failed to update ADMIN_PASSWORD in .env file:", err);
+  }
+}
 
 declare module "express-session" {
   interface SessionData {
@@ -88,15 +122,80 @@ function getIndianTimeString(): string {
   return `${datePart.replace(/-/g, "/")}, ${timePart.toLowerCase()}`;
 }
 
+function parseUserAgent(ua: string): string {
+  let os = "Unknown OS";
+  let browser = "Unknown Browser";
+
+  if (ua.includes("Windows NT 10.0")) os = "Windows 10/11";
+  else if (ua.includes("Windows NT 6.3")) os = "Windows 8.1";
+  else if (ua.includes("Windows NT 6.2")) os = "Windows 8";
+  else if (ua.includes("Windows NT 6.1")) os = "Windows 7";
+  else if (ua.includes("Macintosh")) os = "macOS";
+  else if (ua.includes("iPhone")) os = "iOS (iPhone)";
+  else if (ua.includes("iPad")) os = "iOS (iPad)";
+  else if (ua.includes("Android")) os = "Android";
+  else if (ua.includes("Linux")) os = "Linux";
+
+  if (ua.includes("Chrome") && !ua.includes("Chromium") && !ua.includes("Edg")) browser = "Google Chrome";
+  else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Apple Safari";
+  else if (ua.includes("Firefox")) browser = "Mozilla Firefox";
+  else if (ua.includes("Edg")) browser = "Microsoft Edge";
+  else if (ua.includes("Trident")) browser = "Internet Explorer";
+
+  return `${browser} on ${os}`;
+}
+
+async function getIpLocation(ip: string): Promise<string> {
+  const cleanIp = ip.replace("::ffff:", "").trim();
+  if (cleanIp === "127.0.0.1" || cleanIp === "::1" || cleanIp === "localhost") {
+    return "Kansbahal, Sundargarh, Odisha, India (Localhost Development)";
+  }
+
+  try {
+    const res = await fetch(`http://ip-api.com/json/${cleanIp}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.status === "success") {
+        return `${data.city}, ${data.regionName}, ${data.country} (ISP: ${data.isp})`;
+      }
+    }
+  } catch (err) {
+    console.error("Failed to geolocate IP:", err);
+  }
+
+  return "Unknown Location";
+}
+
+const ADMIN_EMAIL = "singhcakedelight1981.official@gmail.com";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "singh123";
 
-const authAdmin = (req: any, res: any, next: any) => {
-  const token = req.headers["x-admin-password"];
-  if (token !== ADMIN_PASSWORD) {
-    return res.status(401).json({ message: "Unauthorized: Invalid password" });
+const authAdmin = async (req: any, res: any, next: any) => {
+  try {
+    const email = req.headers["x-admin-email"];
+    const password = req.headers["x-admin-password"];
+    
+    if (!email || !password || email.toLowerCase().trim() !== ADMIN_EMAIL) {
+      return res.status(401).json({ message: "Unauthorized: Invalid credentials" });
+    }
+    
+    const adminUser = await storage.getUserByEmail(ADMIN_EMAIL);
+    if (!adminUser || !adminUser.password) {
+      return res.status(401).json({ message: "Unauthorized: Admin account not initialized" });
+    }
+    
+    const isMatch = await comparePasswords(password, adminUser.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Unauthorized: Invalid credentials" });
+    }
+    
+    next();
+  } catch (err) {
+    console.error("authAdmin error:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
-  next();
 };
+
+let adminOtp: { code: string; expiresAt: number } | null = null;
 
 export async function registerRoutes(
   httpServer: Server,
@@ -104,6 +203,191 @@ export async function registerRoutes(
 ): Promise<Server> {
 
   // --- Authentication Routes ---
+
+  app.post("/api/admin/login", async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      if (!email || !password || email.toLowerCase().trim() !== ADMIN_EMAIL) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      const adminUser = await storage.getUserByEmail(ADMIN_EMAIL);
+      if (!adminUser || !adminUser.password) {
+        return res.status(401).json({ message: "Admin account not initialized" });
+      }
+
+      const isMatch = await comparePasswords(password, adminUser.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+
+      // Capture device, IP, and location for the alert email
+      const ip = req.headers["x-forwarded-for"] || req.ip || req.socket.remoteAddress || "Unknown IP";
+      const cleanIp = Array.isArray(ip) ? ip[0].replace("::ffff:", "").trim() : String(ip).replace("::ffff:", "").trim();
+      
+      const userAgent = req.headers["user-agent"] || "Unknown User Agent";
+      const deviceSummary = parseUserAgent(userAgent);
+      
+      const location = await getIpLocation(cleanIp);
+
+      // Send Admin Login Alert Email
+      const alertSubject = "⚠️ Singh Cake Delight - Admin Login Notification";
+      const alertHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #d946ef; border-radius: 12px; padding: 24px;">
+          <div style="text-align: center; border-bottom: 1px solid #d946ef; padding-bottom: 16px; margin-bottom: 20px;">
+            <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+            <p style="margin: 4px 0 0; text-transform: uppercase; font-size: 11px; tracking-wide; color: #8a634e; font-weight: bold;">Security Alert</p>
+          </div>
+          
+          <h2 style="color: #dc2626; text-align: center; margin-top: 0;">⚠️ Admin Login Alert</h2>
+          <p>Hello Admin,</p>
+          <p>A successful login has been detected for the Admin Dashboard of Singh Cake Delight.</p>
+          
+          <div style="background-color: #fff5f5; border: 1px solid #fee2e2; border-radius: 8px; padding: 16px; margin: 20px 0;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; width: 140px; border-bottom: 1px solid #fee2e2;">Time:</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #fee2e2;">${getIndianTimeString()}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; border-bottom: 1px solid #fee2e2;">IP Address:</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #fee2e2; font-family: monospace;">${cleanIp}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; border-bottom: 1px solid #fee2e2;">Location:</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #fee2e2; color: #b91c1c; font-weight: bold;">${location}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; border-bottom: 1px solid #fee2e2;">Device:</td>
+                <td style="padding: 6px 0; border-bottom: 1px solid #fee2e2;">${deviceSummary}</td>
+              </tr>
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">User Agent:</td>
+                <td style="padding: 6px 0; font-size: 12px; color: #666; word-break: break-all;">${userAgent}</td>
+              </tr>
+            </table>
+          </div>
+          
+          <p style="font-size: 13px; color: #718096; text-align: center; margin-top: 24px; border-top: 1px solid #edf2f7; padding-top: 16px;">
+            If this login was you, no action is needed. If you do not recognize this login, please secure your admin account or reset your password immediately.
+          </p>
+        </div>
+      `;
+      
+      // Send the email asynchronously
+      sendEmailNotification(ADMIN_EMAIL, alertSubject, alertHtml).catch(console.error);
+
+      res.json({ message: "Login successful" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/admin/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email || email.toLowerCase().trim() !== ADMIN_EMAIL) {
+        return res.status(400).json({ message: "Verification failed. Reset is only available for the Admin." });
+      }
+
+      // Generate a random 6-digit OTP
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiration = Date.now() + 5 * 60 * 1000; // 5 minutes expiration
+      
+      adminOtp = {
+        code: otpCode,
+        expiresAt: expiration
+      };
+
+      // Email the OTP
+      const otpSubject = "🔑 Admin Password Reset OTP - Singh Cake Delight";
+      const otpHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #d946ef; border-radius: 12px; padding: 24px;">
+          <div style="text-align: center; border-bottom: 1px solid #d946ef; padding-bottom: 16px; margin-bottom: 20px;">
+            <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+            <p style="margin: 4px 0 0; text-transform: uppercase; font-size: 11px; tracking-wide; color: #8a634e; font-weight: bold;">Password Recovery</p>
+          </div>
+          
+          <h2 style="color: #2D1E17; text-align: center;">One-Time Password (OTP)</h2>
+          <p>Dear Admin,</p>
+          <p>We received a request to reset the password for your Admin Dashboard account.</p>
+          <p>Please use the following 6-digit OTP to verify your identity. This code is valid for <strong>5 minutes</strong>.</p>
+          
+          <div style="text-align: center; margin: 24px 0;">
+            <span style="display: inline-block; font-family: monospace; font-size: 32px; font-weight: bold; letter-spacing: 6px; padding: 12px 24px; background-color: #fdf2ff; border: 2px dashed #d946ef; border-radius: 8px; color: #d946ef;">
+              ${otpCode}
+            </span>
+          </div>
+          
+          <p>If you did not request a password reset, please ignore this email or make sure your login details are secure.</p>
+          <br/>
+          <p>Best regards,<br/>Singh Cake Delight Support</p>
+        </div>
+      `;
+
+      await sendEmailNotification(ADMIN_EMAIL, otpSubject, otpHtml);
+      res.json({ message: "OTP sent to your business email." });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/admin/reset-password", async (req, res) => {
+    try {
+      const { email, otp, newPassword } = req.body;
+      if (!email || email.toLowerCase().trim() !== ADMIN_EMAIL) {
+        return res.status(400).json({ message: "Invalid email." });
+      }
+
+      if (!otp || !adminOtp || adminOtp.code !== otp.trim() || Date.now() > adminOtp.expiresAt) {
+        return res.status(400).json({ message: "Invalid or expired OTP." });
+      }
+
+      if (!newPassword || newPassword.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters long." });
+      }
+
+      const adminUser = await storage.getUserByEmail(ADMIN_EMAIL);
+      if (!adminUser) {
+        return res.status(404).json({ message: "Admin account not found." });
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUserPassword(adminUser.id, hashedPassword);
+      
+      // Sync the new password to .env file and memory
+      updateAdminPasswordInEnv(newPassword);
+      
+      // Clear the OTP
+      adminOtp = null;
+
+      // Send confirmation email
+      const confirmSubject = "🔒 Admin Password Reset Confirmation";
+      const confirmHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #d946ef; border-radius: 12px; padding: 24px;">
+          <div style="text-align: center; border-bottom: 1px solid #d946ef; padding-bottom: 16px; margin-bottom: 20px;">
+            <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+            <p style="margin: 4px 0 0; text-transform: uppercase; font-size: 11px; tracking-wide; color: #8a634e; font-weight: bold;">Security Notice</p>
+          </div>
+          
+          <h2 style="color: #2D1E17; text-align: center;">Password Changed Successfully</h2>
+          <p>Dear Admin,</p>
+          <p>Your Admin Dashboard password was successfully changed on ${getIndianTimeString()}.</p>
+          <p>If you did not authorize this change, please contact support immediately.</p>
+          <br/>
+          <p>Best regards,<br/>Singh Cake Delight Support</p>
+        </div>
+      `;
+      sendEmailNotification(ADMIN_EMAIL, confirmSubject, confirmHtml).catch(console.error);
+
+      res.json({ message: "Password reset successfully. You can now login with your new password." });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
 
   app.post("/api/register", async (req, res) => {
     try {
@@ -679,6 +963,27 @@ export async function registerRoutes(
   // Seed data function
   async function seedDatabase() {
     try {
+      // Seed/Sync Admin User
+      const adminUser = await storage.getUserByEmail(ADMIN_EMAIL);
+      const configuredPassword = process.env.ADMIN_PASSWORD || "SinghCakeDelight1981#SecureAdminPass!";
+      if (!adminUser) {
+        const hashedPassword = await hashPassword(configuredPassword);
+        await storage.createUser({
+          name: "Admin",
+          email: ADMIN_EMAIL,
+          phone: "+919438131576",
+          password: hashedPassword,
+        });
+        console.log(`[SEED] Admin account created for ${ADMIN_EMAIL}.`);
+      } else {
+        const isMatch = await comparePasswords(configuredPassword, adminUser.password || "");
+        if (!isMatch) {
+          const hashedPassword = await hashPassword(configuredPassword);
+          await storage.updateUserPassword(adminUser.id, hashedPassword);
+          console.log(`[SEED] Admin account password synced for ${ADMIN_EMAIL}.`);
+        }
+      }
+
       const existingProducts = await storage.getProducts();
       if (existingProducts.length === 0) {
         // Row 1

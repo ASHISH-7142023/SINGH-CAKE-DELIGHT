@@ -7,7 +7,7 @@ const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587");
 const SMTP_USER = process.env.SMTP_USER;
 const SMTP_PASS = process.env.SMTP_PASS;
-const EMAIL_FROM = process.env.EMAIL_FROM || "no-reply@singhcakedelight.com";
+const EMAIL_FROM = process.env.EMAIL_FROM || "singhcakedelight1981.official@gmail.com";
 
 const auditLogPath = path.resolve(process.cwd(), "sent_emails.log");
 
@@ -66,6 +66,7 @@ async function logEmailToAuditFile(to: string, subject: string, html: string): P
 ========================================
 [EMAIL SEND EVENT]
 Timestamp: ${timestamp}
+From: ${EMAIL_FROM}
 To: ${to}
 Subject: ${subject}
 ----------------------------------------

@@ -1,3 +1,7 @@
 node_modules
 dist/
 sqlite.db
+sqlite.db-shm
+sqlite.db-wal
+sent_emails.log
+.env

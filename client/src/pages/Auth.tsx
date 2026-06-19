@@ -206,7 +206,7 @@ export default function Auth() {
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. 9438131576"
+                    placeholder="e.g. 9876543210"
                     className="w-full bg-white/5 border border-white/10 focus:border-primary/80 rounded-xl pl-10 pr-4 py-2.5 text-sm outline-none transition-all text-white placeholder-white/30"
                   />
                 </div>
@@ -410,7 +410,7 @@ export default function Auth() {
                     type="tel"
                     value={googlePhone}
                     onChange={(e) => setGooglePhone(e.target.value)}
-                    placeholder="e.g. 9438131576"
+                    placeholder="e.g. 9876543210"
                     className="w-full bg-background border border-border rounded-xl pl-9 pr-4 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground"
                   />
                 </div>

@@ -668,7 +668,7 @@ export default function Home() {
                     type="tel"
                     value={formPhone}
                     onChange={(e) => setFormPhone(e.target.value)}
-                    placeholder="e.g. 9438131576"
+                    placeholder="e.g. 9876543210"
                     className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground"
                   />
                 </div>

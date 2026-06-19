@@ -2,12 +2,46 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { db } from "./db";
+import { db, sqlite } from "./db";
 import { products, galleryImages } from "@shared/schema";
 import { sql } from "drizzle-orm";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { setupAuth } from "./auth";
+import { syncAllTablesToExcel } from "./excel";
+
+import { readFileSync, existsSync } from "fs";
+import { join } from "path";
+
+function loadEnv() {
+  const envPath = join(process.cwd(), ".env");
+  if (existsSync(envPath)) {
+    try {
+      const content = readFileSync(envPath, "utf-8");
+      for (const line of content.split("\n")) {
+        const trimmed = line.trim();
+        if (trimmed && !trimmed.startsWith("#")) {
+          const index = trimmed.indexOf("=");
+          if (index !== -1) {
+            const key = trimmed.substring(0, index).trim();
+            let val = trimmed.substring(index + 1).trim();
+            if (
+              (val.startsWith('"') && val.endsWith('"')) ||
+              (val.startsWith("'") && val.endsWith("'"))
+            ) {
+              val = val.slice(1, -1);
+            }
+            process.env[key] = val;
+          }
+        }
+      }
+      console.log("[ENV] Loaded .env variables successfully.");
+    } catch (err) {
+      console.error("[ENV] Failed to parse .env file:", err);
+    }
+  }
+}
+loadEnv();
 
 const app = express();
 app.set("trust proxy", 1);
@@ -94,40 +128,48 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Ensure SQLite tables exist before anything else
-  db.run(sql`CREATE TABLE IF NOT EXISTS products (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT NOT NULL,
-    image_url TEXT NOT NULL,
-    category TEXT NOT NULL
-  )`);
-  db.run(sql`CREATE TABLE IF NOT EXISTS gallery_images (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    image_url TEXT NOT NULL,
-    alt_text TEXT NOT NULL
-  )`);
-  db.run(sql`CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    phone TEXT NOT NULL,
-    password TEXT,
-    created_at TEXT NOT NULL
-  )`);
-  db.run(sql`CREATE TABLE IF NOT EXISTS orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id),
-    customer_name TEXT NOT NULL,
-    customer_phone TEXT NOT NULL,
-    cake_name TEXT,
-    cake_image TEXT,
-    notes TEXT,
-    pickup_date TEXT NOT NULL,
-    pickup_time TEXT NOT NULL,
-    status TEXT NOT NULL,
-    created_at TEXT NOT NULL
-  )`);
+  try {
+    // Ensure SQLite tables exist before anything else
+    sqlite.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL UNIQUE,
+        phone TEXT NOT NULL,
+        password TEXT,
+        created_at TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        description TEXT NOT NULL,
+        image_url TEXT NOT NULL,
+        category TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS gallery_images (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        image_url TEXT NOT NULL,
+        alt_text TEXT NOT NULL
+      );
+      CREATE TABLE IF NOT EXISTS orders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER REFERENCES users(id),
+        customer_name TEXT NOT NULL,
+        customer_phone TEXT NOT NULL,
+        cake_name TEXT,
+        cake_image TEXT,
+        notes TEXT,
+        pickup_date TEXT NOT NULL,
+        pickup_time TEXT NOT NULL,
+        status TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+    `);
+    console.log("[DB] SQLite database initialized successfully.");
+    syncAllTablesToExcel();
+  } catch (err: any) {
+    console.error("⚠️ [DB] Failed to execute startup SQLite table checks/creations:", err.message || err);
+  }
 
   await registerRoutes(httpServer, app);
 

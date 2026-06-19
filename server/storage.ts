@@ -5,6 +5,7 @@ import {
   type InsertProduct, type InsertGalleryImage, type InsertOrder, type InsertUser 
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { exportTableToExcel } from "./excel";
 
 export interface IStorage {
   getProducts(): Promise<Product[]>;
@@ -21,6 +22,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   getOrdersByUserId(userId: number): Promise<Order[]>;
+  updateUserPassword(id: number, passwordHash: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -30,6 +32,7 @@ export class DatabaseStorage implements IStorage {
   
   async createProduct(product: InsertProduct): Promise<Product> {
     const [newProduct] = await db.insert(products).values(product).returning();
+    exportTableToExcel("products");
     return newProduct;
   }
 
@@ -39,6 +42,7 @@ export class DatabaseStorage implements IStorage {
   
   async createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage> {
     const [newImage] = await db.insert(galleryImages).values(image).returning();
+    exportTableToExcel("gallery_images");
     return newImage;
   }
 
@@ -63,6 +67,7 @@ export class DatabaseStorage implements IStorage {
       status: "pending",
       createdAt: new Date().toISOString(),
     }).returning();
+    exportTableToExcel("orders");
     return newOrder;
   }
 
@@ -74,11 +79,13 @@ export class DatabaseStorage implements IStorage {
     if (!updatedOrder) {
       throw new Error(`Order with id ${id} not found`);
     }
+    exportTableToExcel("orders");
     return updatedOrder;
   }
 
   async deleteOrder(id: number): Promise<void> {
     await db.delete(orders).where(eq(orders.id, id));
+    exportTableToExcel("orders");
   }
 
   // User Authentication and Profiles
@@ -97,11 +104,19 @@ export class DatabaseStorage implements IStorage {
       ...user,
       createdAt: new Date().toISOString(),
     }).returning();
+    exportTableToExcel("users");
     return newUser;
   }
 
   async getOrdersByUserId(userId: number): Promise<Order[]> {
     return await db.select().from(orders).where(eq(orders.userId, userId));
+  }
+
+  async updateUserPassword(id: number, passwordHash: string): Promise<void> {
+    await db.update(users)
+      .set({ password: passwordHash })
+      .where(eq(users.id, id));
+    exportTableToExcel("users");
   }
 }
 
