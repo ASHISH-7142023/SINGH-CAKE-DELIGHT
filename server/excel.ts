@@ -3,7 +3,8 @@ import path from "path";
 import fs from "fs";
 import { sqlite } from "./db";
 
-const EXPORTS_DIR = path.resolve(process.cwd(), "exports");
+const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : process.cwd();
+const EXPORTS_DIR = path.resolve(dataDir, "exports");
 
 /**
  * Exports a specific SQLite table's content into an Excel (.xlsx) file.

@@ -4,7 +4,12 @@ import * as schema from "@shared/schema";
 import path from "path";
 import fs from "fs";
 
-const dbPath = path.resolve(process.cwd(), "sqlite.db");
+const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : process.cwd();
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const dbPath = path.resolve(dataDir, "sqlite.db");
 
 // Ensure strict Owner-Only permissions (0o600: read/write by owner only)
 // Note: On Windows, chmod only supports setting/unsetting the read-only attribute,
