@@ -4,7 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   Cake, ShieldCheck, Leaf, Star, CheckCircle2,
   MessageCircle, Navigation, Heart, ChevronsRight, X, Instagram, MapPin,
-  ChevronLeft, ChevronRight, CalendarDays
+  ChevronLeft, ChevronRight, CalendarDays, ShoppingBag
 } from "lucide-react";
 import { useProducts } from "@/hooks/use-products";
 import { useGallery } from "@/hooks/use-gallery";
@@ -218,15 +218,15 @@ export default function Home() {
               <Button
                 variant="outline"
                 onClick={() => handleOrder()}
-                className="w-full sm:w-auto bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-7 py-5 text-base font-semibold backdrop-blur-sm transition-all hover:-translate-y-1"
+                className="w-full sm:w-auto bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-7 py-5 text-base font-semibold backdrop-blur-md transition-all hover:-translate-y-1"
               >
-                <MessageCircle className="mr-2 w-5 h-5 text-[#25D366]" />
-                WhatsApp
+                <ShoppingBag className="mr-2 w-5 h-5 text-green-400" />
+                Place Order
               </Button>
               <Button
                 variant="outline"
                 onClick={() => window.open('https://www.instagram.com/singh_cake_delight1981?igsh=MTV0YTRubHdoNDYxNA==', '_blank')}
-                className="w-full sm:w-auto bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-7 py-5 text-base font-semibold backdrop-blur-sm transition-all hover:-translate-y-1"
+                className="w-full sm:w-auto bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-7 py-5 text-base font-semibold backdrop-blur-md transition-all hover:-translate-y-1"
               >
                 <Instagram className="mr-2 w-5 h-5 text-pink-400" />
                 Instagram
@@ -234,17 +234,17 @@ export default function Home() {
               <Button
                 variant="outline"
                 onClick={() => window.open('https://maps.app.goo.gl/ZwCiakRoNcVbL9LK7', '_blank')}
-                className="w-full sm:w-auto bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-7 py-5 text-base font-semibold backdrop-blur-sm transition-all hover:-translate-y-1"
+                className="w-full sm:w-auto bg-white/10 text-white border-white/30 hover:bg-white/20 rounded-full px-7 py-5 text-base font-semibold backdrop-blur-md transition-all hover:-translate-y-1"
               >
                 <MapPin className="mr-2 w-5 h-5 text-red-400" />
                 Directions
               </Button>
             </motion.div>
 
-            <motion.div variants={fadeInUp} className="mt-8 flex items-center gap-4 text-sm text-white/70 font-medium">
-              <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-primary" /> Pickup Only</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-white/30"></span>
-              <span className="flex items-center gap-1"><CheckCircle2 className="w-4 h-4 text-primary" /> Pre-order Required</span>
+            <motion.div variants={fadeInUp} className="mt-8 flex items-center gap-4 text-base text-white font-medium">
+              <span className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-primary" /> Pickup Only</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-white/50"></span>
+              <span className="flex items-center gap-2"><CheckCircle2 className="w-5 h-5 text-primary" /> Pre-order Required</span>
             </motion.div>
           </motion.div>
         </div>
@@ -286,10 +286,10 @@ export default function Home() {
             <p className="text-muted-foreground text-lg">Browse our most loved cake flavors. Every cake can be customized for your specific occasion and to make your day a memorable one.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {isLoadingProducts ? (
               // Skeleton loading state
-              Array(4).fill(0).map((_, i) => (
+              Array(5).fill(0).map((_, i) => (
                 <div key={i} className="bg-card rounded-3xl overflow-hidden border border-border/30 dark:border-white/5 flex flex-col fancy-shadow animate-pulse">
                   <div className="w-full aspect-square bg-muted"></div>
                   <div className="p-6 flex flex-col flex-grow">
@@ -313,9 +313,16 @@ export default function Home() {
                   <img
                     src={product.imageUrl}
                     alt={product.name}
-                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                    className={`w-full h-full object-cover transition-transform duration-500 transform ${
+                      product.name === "Box Cake" 
+                        ? "scale-125 group-hover:scale-[1.32]" 
+                        : "scale-100 group-hover:scale-105"
+                    }`}
+                    style={{
+                      objectPosition: product.imageUrl === "Chocolate-jar-cake.jpeg" ? "center 75%" : "center"
+                    }}
                   />
-                  <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-medium text-white tracking-wide shadow-sm">
+                  <div className="absolute top-4 left-4 bg-black/40 border border-white/10 backdrop-blur-md px-3.5 py-1 rounded-full text-xs font-medium text-white tracking-wide shadow-sm">
                     {product.category}
                   </div>
                 </div>
@@ -325,9 +332,9 @@ export default function Home() {
                   <Button
                     onClick={() => handleOrder(product.name, product.imageUrl)}
                     variant="outline"
-                    className="w-full rounded-full border-foreground/25 bg-transparent hover:bg-foreground hover:text-background text-foreground transition-all duration-300 font-medium py-2.5"
+                    className="w-full rounded-full border border-foreground/15 dark:border-white/20 bg-foreground/5 dark:bg-white/10 backdrop-blur-md hover:bg-foreground hover:text-background text-foreground dark:text-white transition-all duration-300 font-medium py-2.5 shadow-sm"
                   >
-                    Order via WhatsApp
+                    Place Your Order
                   </Button>
                 </div>
               </motion.div>
@@ -459,9 +466,9 @@ export default function Home() {
             <p className="text-muted-foreground max-w-md">Take a look at some of our recent custom creations. Every design is crafted with attention to detail to make your day special.</p>
           </div>
 
-          <div className="columns-2 md:columns-3 gap-4 space-y-4">
+          <div className="columns-2 sm:columns-3 md:columns-4 gap-4 space-y-4">
             {isLoadingGallery ? (
-              Array(6).fill(0).map((_, i) => (
+              Array(8).fill(0).map((_, i) => (
                 <div key={i} className="bg-muted rounded-2xl w-full h-64 animate-pulse mb-4 inline-block"></div>
               ))
             ) : gallery?.map((img, i) => (
@@ -470,7 +477,7 @@ export default function Home() {
                 initial={isDark ? { opacity: 0, scale: 0.9 } : { opacity: 1, scale: 1 }}
                 whileInView={{ opacity: 1, scale: 1 }}
                 viewport={{ once: true }}
-                transition={isDark ? { delay: (i % 3) * 0.1 } : { duration: 0 }}
+                transition={isDark ? { delay: (i % 4) * 0.1 } : { duration: 0 }}
                 className={`relative overflow-hidden rounded-2xl mb-4 inline-block w-full cursor-pointer break-inside-avoid border border-border/40 ${isDark ? "group shadow-sm hover:shadow-xl transition-all duration-300" : ""
                   }`}
                 onClick={() => setSelectedImageIndex(i)}
@@ -599,10 +606,10 @@ export default function Home() {
                   </div>
                   <Button
                     onClick={() => handleOrder(gallery[selectedImageIndex].altText, gallery[selectedImageIndex].imageUrl)}
-                    className="w-full sm:w-auto bg-[#25D366] hover:bg-[#20ba59] text-white hover:text-white font-bold rounded-full px-6 py-2.5 flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 border-none"
+                    className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white font-bold rounded-full px-6 py-2.5 flex items-center justify-center gap-2 transition-all border border-white/30 backdrop-blur-md"
                   >
-                    <MessageCircle className="w-5 h-5 text-white fill-none" />
-                    Order via WhatsApp
+                    <ShoppingBag className="w-5 h-5 text-green-400" />
+                    Place Order
                   </Button>
                 </div>
               </div>
@@ -613,7 +620,7 @@ export default function Home() {
 
       {/* Web Order Form Dialog */}
       <Dialog open={selectedOrderCake !== null} onOpenChange={(open) => !open && setSelectedOrderCake(null)}>
-        <DialogContent className="max-w-md w-full rounded-2xl p-6 bg-card border border-border text-foreground fancy-shadow max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-md w-full rounded-2xl p-6 bg-card border border-border text-foreground fancy-shadow max-h-[90vh] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {selectedOrderCake && (
             <div className="flex flex-col gap-5">
               <div className="flex justify-between items-start">

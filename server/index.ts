@@ -9,6 +9,7 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { setupAuth } from "./auth";
 import { syncAllTablesToExcel } from "./excel";
+import { migrateDatabaseTimestamps } from "./migration";
 
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";
@@ -166,6 +167,7 @@ app.use((req, res, next) => {
       );
     `);
     console.log("[DB] SQLite database initialized successfully.");
+    await migrateDatabaseTimestamps();
     syncAllTablesToExcel();
   } catch (err: any) {
     console.error("⚠️ [DB] Failed to execute startup SQLite table checks/creations:", err.message || err);

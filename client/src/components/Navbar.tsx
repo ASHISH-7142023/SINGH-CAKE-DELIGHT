@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { Menu, X, PhoneCall, User as UserIcon, Calendar, Clock, LogOut, ShoppingBag, Loader2 } from "lucide-react";
+import { Menu, X, Instagram, User as UserIcon, Calendar, Clock, LogOut, ShoppingBag, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CakeThemeToggle } from "./CakeThemeToggle";
 import { useIsDark } from "@/hooks/use-is-dark";
@@ -126,15 +126,15 @@ export function Navbar() {
             ))}
             <CakeThemeToggle />
             <Button 
-              className={`rounded-full bg-red-600 hover:bg-red-700 text-white ml-2 h-11 px-5 text-sm font-semibold flex items-center gap-1.5 ${
+              className={`rounded-full bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] hover:opacity-95 text-white ml-2 h-11 px-5 text-sm font-semibold flex items-center gap-1.5 shadow-md hover:shadow-lg transition-all hover:-translate-y-0.5 duration-300 ${
                 isDark 
-                  ? "shadow-lg shadow-red-600/20 hover:shadow-xl hover:shadow-red-600/30 transition-all hover:-translate-y-0.5" 
+                  ? "shadow-lg shadow-pink-500/20 hover:shadow-xl hover:shadow-pink-500/30" 
                   : ""
               }`}
-              onClick={() => window.open('tel:+' + ["91", "9438", "1315", "76"].join(""))}
+              onClick={() => window.open('https://www.instagram.com/singh_cake_delight1981?igsh=MTV0YTRubHdoNDYxNA==', '_blank')}
             >
-              <PhoneCall className="w-4 h-4" />
-              Call Now
+              <Instagram className="w-4.5 h-4.5" />
+              Instagram
             </Button>
 
             {/* Logged in User Avatar Button */}
@@ -156,6 +156,7 @@ export function Navbar() {
 
           {/* Mobile Menu Actions */}
           <div className="flex items-center gap-3 md:hidden">
+            <CakeThemeToggle />
             {user && (
               <button
                 onClick={() => setIsProfileOpen(true)}
@@ -199,11 +200,11 @@ export function Navbar() {
           ))}
           <div className="px-4 pt-2">
             <Button 
-              className="w-full rounded-full"
-              onClick={() => window.open('tel:+' + ["91", "9438", "1315", "76"].join(""))}
+              className="w-full rounded-full bg-gradient-to-r from-[#833ab4] via-[#fd1d1d] to-[#fcb045] text-white font-semibold flex items-center justify-center gap-2"
+              onClick={() => window.open('https://www.instagram.com/singh_cake_delight1981?igsh=MTV0YTRubHdoNDYxNA==', '_blank')}
             >
-              <PhoneCall className="w-4 h-4 mr-2" />
-              +91 94381 31576
+              <Instagram className="w-4.5 h-4.5" />
+              Instagram Inquiry
             </Button>
           </div>
         </nav>

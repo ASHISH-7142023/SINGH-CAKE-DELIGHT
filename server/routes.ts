@@ -3,9 +3,11 @@ import type { Server } from "http";
 import { storage } from "./storage";
 import { api } from "@shared/routes";
 import { rateLimit } from "express-rate-limit";
-import { insertOrderSchema, insertUserSchema } from "@shared/schema";
+import { insertOrderSchema, insertUserSchema, products } from "@shared/schema";
 import { hashPassword, comparePasswords } from "./auth";
 import { sendEmailNotification } from "./email";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
 
@@ -196,6 +198,7 @@ const authAdmin = async (req: any, res: any, next: any) => {
 };
 
 let adminOtp: { code: string; expiresAt: number } | null = null;
+let userOtps = new Map<string, { code: string; expiresAt: number }>();
 
 export async function registerRoutes(
   httpServer: Server,
@@ -494,6 +497,118 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required." });
+      }
+
+      const user = await storage.getUserByEmail(email.toLowerCase().trim());
+      if (!user) {
+        return res.status(404).json({ message: "No account found with this email address." });
+      }
+
+      if (user.password === null) {
+        return res.status(400).json({ message: "This email is registered via Google Sign-In. Please log in using Google." });
+      }
+
+      // Generate a random 6-digit OTP
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const expiration = Date.now() + 10 * 60 * 1000; // 10 minutes expiration
+
+      userOtps.set(user.email, {
+        code: otpCode,
+        expiresAt: expiration
+      });
+
+      // Email the OTP to the user
+      const otpSubject = "🔑 Password Reset OTP - Singh Cake Delight";
+      const otpHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #e6c5a3; border-radius: 12px; padding: 24px;">
+          <div style="text-align: center; border-bottom: 1px solid #e6c5a3; padding-bottom: 16px; margin-bottom: 20px;">
+            <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+            <p style="margin: 4px 0 0; text-transform: uppercase; font-size: 11px; tracking-wide; color: #8a634e; font-weight: bold;">Password Recovery</p>
+          </div>
+          
+          <h2 style="color: #2D1E17; text-align: center;">One-Time Password (OTP)</h2>
+          <p>Dear ${user.name},</p>
+          <p>We received a request to reset the password for your Singh Cake Delight account.</p>
+          <p>Please use the following 6-digit OTP to verify your identity. This code is valid for <strong>10 minutes</strong>.</p>
+          
+          <div style="text-align: center; margin: 24px 0;">
+            <span style="display: inline-block; font-family: monospace; font-size: 32px; font-weight: bold; letter-spacing: 6px; padding: 12px 24px; background-color: #fdf2ff; border: 2px dashed #d946ef; border-radius: 8px; color: #d946ef;">
+              ${otpCode}
+            </span>
+          </div>
+          
+          <p>If you did not request a password reset, please ignore this email or make sure your login details are secure.</p>
+          <br/>
+          <p>Best regards,<br/>Singh Cake Delight Team</p>
+        </div>
+      `;
+
+      await sendEmailNotification(user.email, otpSubject, otpHtml);
+      res.json({ message: "OTP sent to your email." });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/reset-password", async (req, res) => {
+    try {
+      const { email, otp, newPassword } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required." });
+      }
+
+      const user = await storage.getUserByEmail(email.toLowerCase().trim());
+      if (!user) {
+        return res.status(404).json({ message: "User account not found." });
+      }
+
+      const storedOtp = userOtps.get(user.email);
+      if (!storedOtp || storedOtp.code !== otp.trim() || Date.now() > storedOtp.expiresAt) {
+        return res.status(400).json({ message: "Invalid or expired OTP." });
+      }
+
+      if (!newPassword || newPassword.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters long." });
+      }
+
+      const hashedPassword = await hashPassword(newPassword);
+      await storage.updateUserPassword(user.id, hashedPassword);
+      
+      // Clear the OTP
+      userOtps.delete(user.email);
+
+      // Send confirmation email
+      const confirmSubject = "🔒 Password Reset Confirmation";
+      const confirmHtml = `
+        <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #2D1E17; max-width: 600px; margin: 0 auto; border: 1px solid #e6c5a3; border-radius: 12px; padding: 24px;">
+          <div style="text-align: center; border-bottom: 1px solid #e6c5a3; padding-bottom: 16px; margin-bottom: 20px;">
+            <h1 style="color: #d946ef; margin: 0; font-family: Georgia, serif;">Singh Cake Delight</h1>
+            <p style="margin: 4px 0 0; text-transform: uppercase; font-size: 11px; tracking-wide; color: #8a634e; font-weight: bold;">Security Notice</p>
+          </div>
+          
+          <h2 style="color: #2D1E17; text-align: center;">Password Changed Successfully</h2>
+          <p>Dear ${user.name},</p>
+          <p>Your account password was successfully changed on ${getIndianTimeString()}.</p>
+          <p>If you did not authorize this change, please contact support immediately.</p>
+          <br/>
+          <p>Best regards,<br/>Singh Cake Delight Team</p>
+        </div>
+      `;
+      sendEmailNotification(user.email, confirmSubject, confirmHtml).catch(console.error);
+
+      res.json({ message: "Password reset successfully. You can now login with your new password." });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.post("/api/login-google", async (req, res) => {
     try {
       const { name, email, phone } = req.body;
@@ -645,6 +760,7 @@ export async function registerRoutes(
         customerPhone: formatPhoneWithCountryCode(parsedBody.customerPhone),
         cakeName: parsedBody.cakeName ? escapeHtml(parsedBody.cakeName.trim()) : null,
         cakeImage: parsedBody.cakeImage ? escapeHtml(parsedBody.cakeImage.trim()) : null,
+        customImage: parsedBody.customImage ? String(parsedBody.customImage) : null,
         notes: parsedBody.notes ? escapeHtml(parsedBody.notes.trim()) : null,
         pickupDate: escapeHtml(parsedBody.pickupDate.trim()),
         pickupTime: escapeHtml(parsedBody.pickupTime.trim()),
@@ -711,6 +827,14 @@ export async function registerRoutes(
                 <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Customisation details:</td>
                 <td style="padding: 6px 0; white-space: pre-wrap;">${newOrder.notes || "None"}</td>
               </tr>
+              ${newOrder.customImage ? `
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; border-top: 1px solid #eee; vertical-align: top;">Reference Photo:</td>
+                <td style="padding: 6px 0; border-top: 1px solid #eee;">
+                  <img src="${newOrder.customImage}" alt="Reference Photo" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;" />
+                </td>
+              </tr>
+              ` : ""}
             </table>
           </div>
           
@@ -755,6 +879,14 @@ export async function registerRoutes(
                   <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Notes/Requests:</td>
                   <td style="padding: 6px 0;">${newOrder.notes || "None"}</td>
                 </tr>
+                ${newOrder.customImage ? `
+                <tr>
+                  <td style="padding: 6px 0; font-weight: bold; border-top: 1px solid #eee; vertical-align: top;">Reference Photo:</td>
+                  <td style="padding: 6px 0; border-top: 1px solid #eee;">
+                    <img src="${newOrder.customImage}" alt="Reference Photo" style="max-width: 150px; max-height: 150px; border-radius: 6px; border: 1px solid #ddd;" />
+                  </td>
+                </tr>
+                ` : ""}
               </table>
             </div>
 
@@ -839,6 +971,14 @@ export async function registerRoutes(
                       <td style="padding: 6px 0; font-weight: bold;">Pickup Time:</td>
                       <td style="padding: 6px 0;">${formatTimeTo12Hour(updated.pickupTime)}</td>
                     </tr>
+                    ${updated.customImage ? `
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold; border-top: 1px solid #eee; vertical-align: top;">Reference Photo:</td>
+                      <td style="padding: 6px 0; border-top: 1px solid #eee;">
+                        <img src="${updated.customImage}" alt="Reference Photo" style="max-width: 150px; max-height: 150px; border-radius: 6px; border: 1px solid #ddd;" />
+                      </td>
+                    </tr>
+                    ` : ""}
                   </table>
                 </div>
 
@@ -846,6 +986,11 @@ export async function registerRoutes(
                   <p style="margin: 0; font-size: 13px; color: #b45309; font-weight: bold;">⚠️ TAKEAWAY ONLY</p>
                   <p style="margin: 4px 0 0; font-size: 13px; color: #78350f;">
                     Please collect your cake from our home bakery at: <strong>Q/R No. - 8/5, South Colony Road, Kansbahal</strong>.
+                  </p>
+                  <p style="margin: 8px 0 0; font-size: 13px;">
+                    <a href="https://maps.google.com/maps?q=Singh%20Cake%20Delight%2C%20Q%2FR%20No.%20-%208%2F5%2C%20S%20Colony%20Rd%2C%20Kansbahal%2C%20Odisha%20770034" target="_blank" style="color: #d946ef; font-weight: bold; text-decoration: underline;">
+                      📍 View Pickup Location on Google Maps
+                    </a>
                   </p>
                 </div>
 
@@ -1000,13 +1145,42 @@ export async function registerRoutes(
         await storage.createProduct({ name: "Glass Cake", description: "Elegant layered cake served in a glass — a beautiful and delicious treat.", imageUrl: "Glass_cake.jpg", category: "Specialty" });
         await storage.createProduct({ name: "Candy Bites", description: "Irresistible chocolate candy bites — perfect for gifting and snacking.", imageUrl: "Chocolate Candy Bites.jpeg", category: "Specialty" });
         await storage.createProduct({ name: "Muffins", description: "Soft and fluffy eggless muffins bursting with real mango flavor.", imageUrl: "Muffins.jpg", category: "Specialty" });
+        await storage.createProduct({ name: "Jar Cake", description: "Layers of rich chocolate sponge and smooth cream inside a cute, portable glass jar.", imageUrl: "Chocolate-jar-cake.jpeg", category: "Specialty" });
+        await storage.createProduct({ name: "Box Cake", description: "Premium eggless cake layers beautifully packed in a convenient celebration box.", imageUrl: "BOX-Cake.webp", category: "Specialty" });
+      } else {
+        const hasJarCake = existingProducts.some(p => p.name === "Jar Cake");
+        if (!hasJarCake) {
+          await storage.createProduct({
+            name: "Jar Cake",
+            description: "Layers of rich chocolate sponge and smooth cream inside a cute, portable glass jar.",
+            imageUrl: "Chocolate-jar-cake.jpeg",
+            category: "Specialty"
+          });
+          console.log("[SEED] Dynamically added Jar Cake to existing products database.");
+        }
+        const hasBoxCake = existingProducts.some(p => p.name === "Box Cake");
+        if (!hasBoxCake) {
+          await storage.createProduct({
+            name: "Box Cake",
+            description: "Premium eggless cake layers beautifully packed in a convenient celebration box.",
+            imageUrl: "BOX-Cake.webp",
+            category: "Specialty"
+          });
+          console.log("[SEED] Dynamically added Box Cake to existing products database.");
+        } else {
+          // If Box Cake already exists in DB but points to the old .jpg image, update it
+          const boxCake = existingProducts.find(p => p.name === "Box Cake");
+          if (boxCake && boxCake.imageUrl !== "BOX-Cake.webp") {
+            await db.update(products).set({ imageUrl: "BOX-Cake.webp" }).where(eq(products.id, boxCake.id));
+            console.log("[SEED] Updated Box Cake image URL to BOX-Cake.webp in database.");
+          }
+        }
       }
 
 
       const existingGallery = await storage.getGalleryImages();
       if (existingGallery.length === 0) {
         await storage.createGalleryImage({ imageUrl: "ButterScotch-cake (2).jpeg", altText: "Chocolate Drip Cake" });
-        await storage.createGalleryImage({ imageUrl: "Ring-Ceremony-Cake.jpg", altText: "Ring Ceremony Cake" });
         await storage.createGalleryImage({ imageUrl: "cup-cake2.jpeg", altText: "Cup Cake" });
         await storage.createGalleryImage({ imageUrl: "golden-cake.jpeg", altText: "Golden Cake" });
         await storage.createGalleryImage({ imageUrl: "Rasmalai-Cake.jpeg", altText: "Rasmalai Cake" });
@@ -1017,7 +1191,7 @@ export async function registerRoutes(
         await storage.createGalleryImage({ imageUrl: "Anniversary-cake.jpeg", altText: "Anniversary Cake" });
         await storage.createGalleryImage({ imageUrl: "bento-1.jpeg", altText: "Bento Cake" });
         await storage.createGalleryImage({ imageUrl: "Rasmalai-cake-1.jpg", altText: "Rasmalai Cake" });
-        await storage.createGalleryImage({ imageUrl: "Fruits_Cake.jpeg", altText: "Fruits Cake" });
+        await storage.createGalleryImage({ imageUrl: "Fruits-Cake.jpeg", altText: "Fruits Cake" });
         await storage.createGalleryImage({ imageUrl: "Romantic-Rose-Anniversary-Cake.jpg", altText: "Romantic Rose Anniversary Cake" });
         await storage.createGalleryImage({ imageUrl: "bento-2.jpeg", altText: "Bento Cake" });
         await storage.createGalleryImage({ imageUrl: "Black-forest-Cake.jpeg", altText: "Black Forest Cake" });
@@ -1025,7 +1199,11 @@ export async function registerRoutes(
         await storage.createGalleryImage({ imageUrl: "Pink-Velvet-Starry-Cake.jpg", altText: "Pink Velvet Starry Cake" });
         await storage.createGalleryImage({ imageUrl: "Butterscotch-Cake.jpeg", altText: "Butterscotch Cake" });
         await storage.createGalleryImage({ imageUrl: "Butterscotch-og-cake.jpeg", altText: "Butterscotch Cake" });
-        await storage.createGalleryImage({ imageUrl: "Choco-Vanilla.png", altText: "Chocolate Vanilla Cake" });
+        await storage.createGalleryImage({ imageUrl: "Glass-Cake-3.jpeg", altText: "Triple Glass Cake" });
+        await storage.createGalleryImage({ imageUrl: "Chocolate Cake.jpeg", altText: "Chocolate Cake" });
+        await storage.createGalleryImage({ imageUrl: "Designed Chocolate-Cake.jpeg", altText: "Designed Chocolate Cake" });
+        await storage.createGalleryImage({ imageUrl: "Ring-Ceremony-Cake.jpg", altText: "Ring Ceremony Cake" });
+        await storage.createGalleryImage({ imageUrl: "TRI-Glass-Cake.jpeg", altText: "Tri Glass Cake" });
         await storage.createGalleryImage({ imageUrl: "Chocolate_Cake_main.jpeg", altText: "Chocolate Cake" });
         await storage.createGalleryImage({ imageUrl: "Chocolate Candy Bites.jpeg", altText: "Chocolate Candy Bites" });
         await storage.createGalleryImage({ imageUrl: "Chocolate_cake_2.png", altText: "Chocolate Cake" });
@@ -1034,11 +1212,12 @@ export async function registerRoutes(
         await storage.createGalleryImage({ imageUrl: "Pink-Rose-Cake.jpg", altText: "Pink Rose Cake" });
         await storage.createGalleryImage({ imageUrl: "Chocolate-jar-cake-Open.jpeg", altText: "Chocolate Jar Cake" });
         await storage.createGalleryImage({ imageUrl: "Chocolate-jar-cake.jpeg", altText: "Chocolate Open Jar Cake " });
+        await storage.createGalleryImage({ imageUrl: "2-Tier-Chocolate-Cake.jpeg", altText: "2 Tier Chocolate Cake " });
         await storage.createGalleryImage({ imageUrl: "Assorted-Chocolate-High-Tea-Platter.jpg", altText: "Assorted Chocolate High Tea Platter" });
         await storage.createGalleryImage({ imageUrl: "Chocolate-chocochips.jpeg", altText: "Chocolate Choco-Chips Cake" });
         await storage.createGalleryImage({ imageUrl: "Chocolate-Crunch-Overload-Cake.jpg", altText: "Chocolate Crunch Overload Cake" });
         await storage.createGalleryImage({ imageUrl: "Strawberry Cake.jpeg", altText: "Strawberry Cake" });
-        await storage.createGalleryImage({ imageUrl: "Vanilla_Black.jpeg", altText: "Vanilla Black Cake" });
+        await storage.createGalleryImage({ imageUrl: "Pink Velvet Floral Elegance Cake.jpeg", altText: "Pink Velvet Floral Elegance Cake" });
         await storage.createGalleryImage({ imageUrl: "Teachers_Day.jpeg", altText: "Teacher's Day Cake" });
         await storage.createGalleryImage({ imageUrl: "Chocolate-Fruits-Cake.jpeg", altText: "Chocolate Fruits Cake" });
         await storage.createGalleryImage({ imageUrl: "cup-cake-3.jpeg", altText: "Cup Cake" });
@@ -1047,8 +1226,10 @@ export async function registerRoutes(
         await storage.createGalleryImage({ imageUrl: "Chocolate_Drip_Cake.jpeg", altText: "Chocolate Drip Cake" });
         await storage.createGalleryImage({ imageUrl: "Pineapple_Cake.jpeg", altText: "Pineapple Cake" });
         await storage.createGalleryImage({ imageUrl: "Strawberry_cake_2.jpeg", altText: "Strawberry Cake" });
+        await storage.createGalleryImage({ imageUrl: "Pink-Cake.jpeg", altText: "Pink Cake" });
         await storage.createGalleryImage({ imageUrl: "KitKat-Premium-Bday-Cake.jpg", altText: "Kit Kat Premium Bday Cake" });
         await storage.createGalleryImage({ imageUrl: "Glass_cake.jpg", altText: "Glass Cake" });
+        await storage.createGalleryImage({ imageUrl: "Combo.jpeg", altText: "Combo Of Glass Cake & Cup Cake" });
         await storage.createGalleryImage({ imageUrl: "Maggie_Cake.jpg", altText: "Maggie's Cake" });
         await storage.createGalleryImage({ imageUrl: "Elegant-Butterfly-Drip-Cake.jpg", altText: "Elegant Butterfly Drip Cake" });
         await storage.createGalleryImage({ imageUrl: "cup-cake1.jpeg", altText: "Cup Cake" });
@@ -1059,7 +1240,6 @@ export async function registerRoutes(
         await storage.createGalleryImage({ imageUrl: "Chocolate_Bento_Drip_Cake.jpg", altText: "Chocolate Bento Drip Cake" });
         await storage.createGalleryImage({ imageUrl: "1yr-Anniversary-Bento-Cake.jpg", altText: "1st Year Anniversary Bento Cake" });
         await storage.createGalleryImage({ imageUrl: "18th_B'day_Chocolate_Bento_Cake_Upper.jpg", altText: "18th Birthday Chocolate Bento Cake" });
-        await storage.createGalleryImage({ imageUrl: "18th_B'day_Chocolate_Bento_Cake_Close_Shot.jpg", altText: "18th Birthday Chocolate Bento Cake Close Shot" });
         await storage.createGalleryImage({ imageUrl: "Yellow_Rose_B'day_Cake.jpg", altText: "Yellow Rose Birthday Cake" });
         await storage.createGalleryImage({ imageUrl: "Vanilla-Cake-2.jpeg", altText: "Vanilla Cake" });
         await storage.createGalleryImage({ imageUrl: "Grass-cake.jpeg", altText: "Grass Cake" });

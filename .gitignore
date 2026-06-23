@@ -5,3 +5,4 @@ sqlite.db-shm
 sqlite.db-wal
 sent_emails.log
 .env
+exports/

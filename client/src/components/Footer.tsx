@@ -1,5 +1,5 @@
-import { MapPin, Clock, Heart, Cake } from "lucide-react";
-import { FaInstagram, FaPhoneAlt, FaWhatsapp } from "react-icons/fa";
+import { MapPin, Clock, Heart, Cake, Mail } from "lucide-react";
+import { FaInstagram } from "react-icons/fa";
 
 export function Footer({ onWhatsAppClick }: { onWhatsAppClick?: () => void }) {
   return (
@@ -31,26 +31,13 @@ export function Footer({ onWhatsAppClick }: { onWhatsAppClick?: () => void }) {
                 <FaInstagram className="w-5 h-5" />
               </a>
               <a 
-                href="/api/order-whatsapp" 
+                href="https://mail.google.com/mail/?view=cm&fs=1&to=singhcakedelight1981.official@gmail.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => {
-                  if (onWhatsAppClick) {
-                    e.preventDefault();
-                    onWhatsAppClick();
-                  }
-                }}
-                className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-[#25D366] hover:text-white transition-colors"
-                aria-label="WhatsApp"
+                className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-[#EA4335] hover:text-white transition-colors"
+                aria-label="Email Us"
               >
-                <FaWhatsapp className="w-5 h-5" />
-              </a>
-              <a 
-                href={`tel:+${["91", "9438", "1315", "76"].join("")}`}
-                className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-primary hover:text-foreground transition-colors"
-                aria-label="Call Us"
-              >
-                <FaPhoneAlt className="w-4 h-4" />
+                <Mail className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -67,12 +54,14 @@ export function Footer({ onWhatsAppClick }: { onWhatsAppClick?: () => void }) {
                 </span>
               </li>
               <li className="flex gap-3 items-center">
-                <FaPhoneAlt className="w-4 h-4 text-primary shrink-0" />
+                <Mail className="w-5 h-5 text-primary shrink-0" />
                 <a 
-                  href={`tel:+${["91", "9438", "1315", "76"].join("")}`} 
-                  className="text-background/80 hover:text-primary transition-colors"
+                  href="https://mail.google.com/mail/?view=cm&fs=1&to=singhcakedelight1981.official@gmail.com" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-background/80 hover:text-primary transition-colors text-sm break-all"
                 >
-                  +91 94381 31576
+                  singhcakedelight1981.official@gmail.com
                 </a>
               </li>
               <li className="flex gap-3 items-center">

@@ -7,6 +7,24 @@ import {
 import { eq } from "drizzle-orm";
 import { exportTableToExcel } from "./excel";
 
+export function getIndianTimeString(): string {
+  const dateObj = new Date();
+  const datePart = dateObj.toLocaleDateString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  });
+  const timePart = dateObj.toLocaleTimeString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: true,
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
+  return `${datePart.replace(/-/g, "/")}, ${timePart.toLowerCase()}`;
+}
+
 export interface IStorage {
   getProducts(): Promise<Product[]>;
   createProduct(product: InsertProduct): Promise<Product>;
@@ -65,7 +83,7 @@ export class DatabaseStorage implements IStorage {
     const [newOrder] = await db.insert(orders).values({
       ...order,
       status: "pending",
-      createdAt: new Date().toISOString(),
+      createdAt: getIndianTimeString(),
     }).returning();
     exportTableToExcel("orders");
     return newOrder;
@@ -102,7 +120,7 @@ export class DatabaseStorage implements IStorage {
   async createUser(user: InsertUser): Promise<User> {
     const [newUser] = await db.insert(users).values({
       ...user,
-      createdAt: new Date().toISOString(),
+      createdAt: getIndianTimeString(),
     }).returning();
     exportTableToExcel("users");
     return newUser;

@@ -264,8 +264,18 @@ export default function Admin() {
   if (!isAuthenticated) {
     if (showForgotForm) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
-          <div className="max-w-md w-full bg-card rounded-2xl border border-border/80 p-8 fancy-shadow text-center">
+        <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+          {/* Full screen Background Image */}
+          <div className="absolute inset-0 z-0">
+            <img
+              src="/main-login-page.png"
+              alt="Login Background"
+              className="w-full h-full object-cover filter blur-[2px] brightness-[0.4]"
+            />
+            {/* Dark overlay gradient */}
+            <div className="absolute inset-0 bg-gradient-to-tr from-black/85 via-black/40 to-transparent"></div>
+          </div>
+          <div className="relative z-10 max-w-md w-full bg-card rounded-2xl border border-border/80 p-8 fancy-shadow text-center">
             <div className="mx-auto w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-6">
               <Lock className="w-6 h-6" />
             </div>
@@ -288,7 +298,7 @@ export default function Admin() {
                     type="email"
                     value={forgotEmail}
                     onChange={(e) => setForgotEmail(e.target.value)}
-                    placeholder="singhcakedelight1981.official@gmail.com"
+                    placeholder="admin@example.com"
                     className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground"
                   />
                 </div>
@@ -393,8 +403,18 @@ export default function Admin() {
     }
 
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
-        <div className="max-w-md w-full bg-card rounded-2xl border border-border/80 p-8 fancy-shadow text-center">
+      <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+        {/* Full screen Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="/main-login-page.png"
+            alt="Login Background"
+            className="w-full h-full object-cover filter blur-[2px] brightness-[0.4]"
+          />
+          {/* Dark overlay gradient */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-black/85 via-black/40 to-transparent"></div>
+        </div>
+        <div className="relative z-10 max-w-md w-full bg-card rounded-2xl border border-border/80 p-8 fancy-shadow text-center">
           <div className="mx-auto w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mb-6">
             <Lock className="w-6 h-6" />
           </div>
@@ -412,7 +432,7 @@ export default function Admin() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="singhcakedelight1981.official@gmail.com"
+                placeholder="admin@example.com"
                 className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground"
               />
             </div>

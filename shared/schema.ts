@@ -32,6 +32,7 @@ export const orders = sqliteTable("orders", {
   customerPhone: text("customer_phone").notNull(),
   cakeName: text("cake_name"),
   cakeImage: text("cake_image"),
+  customImage: text("custom_image"), // Stores customer's uploaded reference photo base64
   notes: text("notes"),
   pickupDate: text("pickup_date").notNull(),
   pickupTime: text("pickup_time").notNull(),
