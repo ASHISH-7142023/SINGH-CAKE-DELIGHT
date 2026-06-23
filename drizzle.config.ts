@@ -31,8 +31,9 @@ loadEnv();
 export default defineConfig({
   out: "./migrations",
   schema: "./shared/schema.ts",
-  dialect: "sqlite",
+  dialect: process.env.TURSO_DATABASE_URL ? "turso" : "sqlite",
   dbCredentials: {
-    url: "./sqlite.db",
+    url: process.env.TURSO_DATABASE_URL || "./sqlite.db",
+    authToken: process.env.TURSO_AUTH_TOKEN,
   },
 });

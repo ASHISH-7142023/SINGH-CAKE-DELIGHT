@@ -130,45 +130,49 @@ app.use((req, res, next) => {
 
 (async () => {
   try {
-    // Ensure SQLite tables exist before anything else
-    sqlite.exec(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        phone TEXT NOT NULL,
-        password TEXT,
-        created_at TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS products (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        description TEXT NOT NULL,
-        image_url TEXT NOT NULL,
-        category TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS gallery_images (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        image_url TEXT NOT NULL,
-        alt_text TEXT NOT NULL
-      );
-      CREATE TABLE IF NOT EXISTS orders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER REFERENCES users(id),
-        customer_name TEXT NOT NULL,
-        customer_phone TEXT NOT NULL,
-        cake_name TEXT,
-        cake_image TEXT,
-        notes TEXT,
-        pickup_date TEXT NOT NULL,
-        pickup_time TEXT NOT NULL,
-        status TEXT NOT NULL,
-        created_at TEXT NOT NULL
-      );
-    `);
-    console.log("[DB] SQLite database initialized successfully.");
-    await migrateDatabaseTimestamps();
-    syncAllTablesToExcel();
+    // Ensure SQLite tables exist before anything else in development
+    if (sqlite) {
+      sqlite.exec(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL UNIQUE,
+          phone TEXT NOT NULL,
+          password TEXT,
+          created_at TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS products (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          image_url TEXT NOT NULL,
+          category TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS gallery_images (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          image_url TEXT NOT NULL,
+          alt_text TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS orders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER REFERENCES users(id),
+          customer_name TEXT NOT NULL,
+          customer_phone TEXT NOT NULL,
+          cake_name TEXT,
+          cake_image TEXT,
+          notes TEXT,
+          pickup_date TEXT NOT NULL,
+          pickup_time TEXT NOT NULL,
+          status TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+      `);
+      console.log("[DB] Local SQLite database initialized successfully.");
+      await migrateDatabaseTimestamps();
+    } else {
+      console.log("[DB] Cloud database connection initialized successfully.");
+    }
+    await syncAllTablesToExcel();
   } catch (err: any) {
     console.error("⚠️ [DB] Failed to execute startup SQLite table checks/creations:", err.message || err);
   }
