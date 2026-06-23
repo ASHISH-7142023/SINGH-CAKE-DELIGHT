@@ -255,7 +255,7 @@ export function Navbar() {
                     <ShoppingBag className="w-8 h-8 mx-auto opacity-30 text-muted-foreground mb-2" />
                     <p className="text-sm font-semibold text-muted-foreground">No orders submitted yet.</p>
                     <p className="text-xs text-muted-foreground/80 mt-1 max-w-xs mx-auto">
-                      Pre-order a custom cake at least 6 days in advance to see it listed here!
+                      Pre-order a custom cake at least 4 days in advance to see it listed here!
                     </p>
                   </div>
                 ) : (

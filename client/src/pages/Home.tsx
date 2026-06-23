@@ -33,11 +33,29 @@ export default function Home() {
   const [formDate, setFormDate] = useState("");
   const [formTime, setFormTime] = useState("");
   const [formNotes, setFormNotes] = useState("");
+  const [formCustomImage, setFormCustomImage] = useState("");
+  const [formCustomChanges, setFormCustomChanges] = useState("");
   const [formError, setFormError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const { data: user } = useQuery<any>({ queryKey: ["/api/me"] });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    if (file.size > 2 * 1024 * 1024) {
+      setFormError("Reference photo must be smaller than 2MB.");
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormCustomImage(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
 
   useEffect(() => {
     if (selectedOrderCake && user) {
@@ -48,7 +66,7 @@ export default function Home() {
 
   const getMinPickupDate = () => {
     const minDate = new Date();
-    minDate.setDate(minDate.getDate() + 6); // Today + 6 days
+    minDate.setDate(minDate.getDate() + 4); // Today + 4 days
     const yyyy = minDate.getFullYear();
     const mm = String(minDate.getMonth() + 1).padStart(2, '0');
     const dd = String(minDate.getDate()).padStart(2, '0');
@@ -85,6 +103,8 @@ export default function Home() {
           notes: formNotes,
           pickupDate: formDate,
           pickupTime: formTime,
+          customImage: formCustomImage || null,
+          customChanges: formCustomChanges || null,
         }),
       });
       const data = await response.json();
@@ -97,6 +117,8 @@ export default function Home() {
       setFormDate("");
       setFormTime("");
       setFormNotes("");
+      setFormCustomImage("");
+      setFormCustomChanges("");
       setSelectedOrderCake(null);
       alert("🎉 Your order request has been submitted successfully! We will contact you on WhatsApp to finalize the pickup details.");
     } catch (err: any) {
@@ -634,9 +656,9 @@ export default function Home() {
               <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs flex gap-2.5 items-start">
                 <span className="text-base leading-none">⚠️</span>
                 <div className="flex-grow space-y-1">
-                  <p className="font-bold">Pickup Only / 6-Day Advance Order Required</p>
+                  <p className="font-bold">Pickup Only / 4-Day Advance Order Required</p>
                   <p className="leading-relaxed opacity-95">
-                    We are a home bakery in <strong>South Colony, Kansbahal</strong>. We do <strong>NOT</strong> provide delivery. Orders must be submitted at least <strong>6 days in advance</strong>.
+                    We are a home bakery in <strong>South Colony, Kansbahal</strong>. We do <strong>NOT</strong> provide delivery. Orders must be submitted at least <strong>4 days in advance</strong>.
                   </p>
                 </div>
               </div>
@@ -708,7 +730,7 @@ export default function Home() {
                           }}
                           disabled={(date) => {
                             const minDate = new Date();
-                            minDate.setDate(minDate.getDate() + 6);
+                            minDate.setDate(minDate.getDate() + 4);
                             minDate.setHours(0, 0, 0, 0);
                             return date < minDate;
                           }}
@@ -740,6 +762,48 @@ export default function Home() {
                     value={formNotes}
                     onChange={(e) => setFormNotes(e.target.value)}
                     placeholder="Eggless flavor customizations, text written on the cake, tier requests, shape preferences, etc."
+                    className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground resize-none"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-muted-foreground">Add Reference Photo (Optional)</label>
+                  {!formCustomImage ? (
+                    <div className="border border-dashed border-border rounded-xl p-4 text-center cursor-pointer hover:border-primary/50 transition-colors bg-secondary/10 relative">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="absolute inset-0 opacity-0 cursor-pointer"
+                      />
+                      <p className="text-xs text-muted-foreground">Click to upload reference image (Max 2MB)</p>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-3 p-2.5 rounded-xl border border-border bg-secondary/20 relative">
+                      <img src={formCustomImage} alt="Reference Preview" className="w-12 h-12 rounded-lg object-cover border border-border" />
+                      <div className="flex-grow min-w-0">
+                        <p className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">Photo Selected</p>
+                        <p className="text-xs truncate text-foreground/80">Reference image ready</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setFormCustomImage("")}
+                        className="p-1.5 rounded-lg bg-foreground/5 hover:bg-red-500/10 hover:text-red-500 text-muted-foreground transition-colors"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <label htmlFor="customChanges" className="text-xs font-semibold text-muted-foreground">Changes You Want (Optional)</label>
+                  <textarea
+                    id="customChanges"
+                    rows={2}
+                    value={formCustomChanges}
+                    onChange={(e) => setFormCustomChanges(e.target.value)}
+                    placeholder="Specify any design modifications or color changes you want"
                     className="w-full bg-background border border-border rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-primary transition-all text-foreground resize-none"
                   />
                 </div>

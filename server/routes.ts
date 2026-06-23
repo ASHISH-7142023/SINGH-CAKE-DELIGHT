@@ -425,7 +425,7 @@ export async function registerRoutes(
           </div>
           <h2>Welcome to Singh Cake Delight, ${user.name}!</h2>
           <p>We are absolutely thrilled to welcome you to our family. Your account has been registered successfully.</p>
-          <p>You can now browse our signature delights, place pre-orders at least 6 days in advance, and check your booking statuses and history directly from your profile drawer in the navbar.</p>
+          <p>You can now browse our signature delights, place pre-orders at least 4 days in advance, and check your booking statuses and history directly from your profile drawer in the navbar.</p>
           
           <div style="background-color: #fcf9f5; border: 1px solid #eedecf; border-radius: 8px; padding: 14px; margin: 20px 0; font-size: 14px;">
             <strong>Registered Account Details:</strong>
@@ -723,14 +723,14 @@ export async function registerRoutes(
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       const minDate = new Date(today);
-      minDate.setDate(today.getDate() + 6); // Today + 6 days
+      minDate.setDate(today.getDate() + 4); // Today + 4 days
       
       const pickupDateObj = new Date(year, month - 1, day);
       pickupDateObj.setHours(0, 0, 0, 0);
       
       if (pickupDateObj.getTime() < minDate.getTime()) {
         return res.status(400).json({
-          message: "Orders must be placed at least 6 days in advance of the pickup date."
+          message: "Orders must be placed at least 4 days in advance of the pickup date."
         });
       }
       
@@ -760,8 +760,9 @@ export async function registerRoutes(
         customerPhone: formatPhoneWithCountryCode(parsedBody.customerPhone),
         cakeName: parsedBody.cakeName ? escapeHtml(parsedBody.cakeName.trim()) : null,
         cakeImage: parsedBody.cakeImage ? escapeHtml(parsedBody.cakeImage.trim()) : null,
-        customImage: parsedBody.customImage ? String(parsedBody.customImage) : null,
         notes: parsedBody.notes ? escapeHtml(parsedBody.notes.trim()) : null,
+        customImage: parsedBody.customImage ? parsedBody.customImage.trim() : null,
+        customChanges: parsedBody.customChanges ? escapeHtml(parsedBody.customChanges.trim()) : null,
         pickupDate: escapeHtml(parsedBody.pickupDate.trim()),
         pickupTime: escapeHtml(parsedBody.pickupTime.trim()),
       };
@@ -827,14 +828,20 @@ export async function registerRoutes(
                 <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Customisation details:</td>
                 <td style="padding: 6px 0; white-space: pre-wrap;">${newOrder.notes || "None"}</td>
               </tr>
+              ${newOrder.customChanges ? `
+              <tr>
+                <td style="padding: 6px 0; font-weight: bold; vertical-align: top; color: #d946ef;">Changes You Want:</td>
+                <td style="padding: 6px 0; white-space: pre-wrap; color: #d946ef; font-weight: bold;">${newOrder.customChanges}</td>
+              </tr>
+              ` : ''}
               ${newOrder.customImage ? `
               <tr>
-                <td style="padding: 6px 0; font-weight: bold; border-top: 1px solid #eee; vertical-align: top;">Reference Photo:</td>
-                <td style="padding: 6px 0; border-top: 1px solid #eee;">
-                  <img src="${newOrder.customImage}" alt="Reference Photo" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd;" />
+                <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Reference Design Photo:</td>
+                <td style="padding: 6px 0;">
+                  <img src="${newOrder.customImage}" alt="Customer Reference Design" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px;" />
                 </td>
               </tr>
-              ` : ""}
+              ` : ''}
             </table>
           </div>
           
@@ -879,14 +886,20 @@ export async function registerRoutes(
                   <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Notes/Requests:</td>
                   <td style="padding: 6px 0;">${newOrder.notes || "None"}</td>
                 </tr>
+                ${newOrder.customChanges ? `
+                <tr>
+                  <td style="padding: 6px 0; font-weight: bold; vertical-align: top; color: #d946ef;">Changes You Want:</td>
+                  <td style="padding: 6px 0; color: #d946ef; font-weight: bold;">${newOrder.customChanges}</td>
+                </tr>
+                ` : ''}
                 ${newOrder.customImage ? `
                 <tr>
-                  <td style="padding: 6px 0; font-weight: bold; border-top: 1px solid #eee; vertical-align: top;">Reference Photo:</td>
-                  <td style="padding: 6px 0; border-top: 1px solid #eee;">
-                    <img src="${newOrder.customImage}" alt="Reference Photo" style="max-width: 150px; max-height: 150px; border-radius: 6px; border: 1px solid #ddd;" />
+                  <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Reference Design Photo:</td>
+                  <td style="padding: 6px 0;">
+                    <img src="${newOrder.customImage}" alt="Reference Design" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px;" />
                   </td>
                 </tr>
-                ` : ""}
+                ` : ''}
               </table>
             </div>
 
@@ -971,14 +984,20 @@ export async function registerRoutes(
                       <td style="padding: 6px 0; font-weight: bold;">Pickup Time:</td>
                       <td style="padding: 6px 0;">${formatTimeTo12Hour(updated.pickupTime)}</td>
                     </tr>
+                    ${updated.customChanges ? `
+                    <tr>
+                      <td style="padding: 6px 0; font-weight: bold; color: #d946ef;">Changes You Want:</td>
+                      <td style="padding: 6px 0; color: #d946ef; font-weight: bold;">${updated.customChanges}</td>
+                    </tr>
+                    ` : ''}
                     ${updated.customImage ? `
                     <tr>
-                      <td style="padding: 6px 0; font-weight: bold; border-top: 1px solid #eee; vertical-align: top;">Reference Photo:</td>
-                      <td style="padding: 6px 0; border-top: 1px solid #eee;">
-                        <img src="${updated.customImage}" alt="Reference Photo" style="max-width: 150px; max-height: 150px; border-radius: 6px; border: 1px solid #ddd;" />
+                      <td style="padding: 6px 0; font-weight: bold; vertical-align: top;">Reference Design:</td>
+                      <td style="padding: 6px 0;">
+                        <img src="${updated.customImage}" alt="Reference Design" style="max-width: 200px; max-height: 200px; border-radius: 8px; border: 1px solid #ddd; margin-top: 5px;" />
                       </td>
                     </tr>
-                    ` : ""}
+                    ` : ''}
                   </table>
                 </div>
 

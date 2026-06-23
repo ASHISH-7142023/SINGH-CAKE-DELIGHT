@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { 
   ShieldAlert, CheckCircle, Trash2, MessageCircle, Clock, 
   Calendar, CheckCircle2, ListFilter, RefreshCw, LogOut, Lock,
-  Eye, EyeOff 
+  Eye, EyeOff, X 
 } from "lucide-react";
 
 interface Order {
@@ -15,6 +15,8 @@ interface Order {
   cakeName: string | null;
   cakeImage: string | null;
   notes: string | null;
+  customImage?: string | null;
+  customChanges?: string | null;
   pickupDate: string;
   pickupTime: string;
   status: string;
@@ -56,6 +58,7 @@ export default function Admin() {
   const [error, setError] = useState("");
   const [authError, setAuthError] = useState("");
   const [filter, setFilter] = useState<"all" | "pending" | "completed">("all");
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const [showForgotForm, setShowForgotForm] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
@@ -611,6 +614,7 @@ export default function Admin() {
                       <th className="p-5">Order ID</th>
                       <th className="p-5">Customer</th>
                       <th className="p-5">Cake Request</th>
+                      <th className="p-5">Reference Design</th>
                       <th className="p-5">Pickup Schedule</th>
                       <th className="p-5">Status</th>
                       <th className="p-5">Special Notes</th>
@@ -643,6 +647,18 @@ export default function Admin() {
                           )}
                         </td>
                         <td className="p-5">
+                          {order.customImage ? (
+                            <img 
+                              src={order.customImage} 
+                              alt="Customer Reference" 
+                              className="w-12 h-12 rounded object-cover border border-border cursor-pointer hover:opacity-90 transition-opacity animate-pulse"
+                              onClick={() => setZoomedImage(order.customImage || null)}
+                            />
+                          ) : (
+                            <span className="text-muted-foreground/60 italic text-xs">No reference</span>
+                          )}
+                        </td>
+                        <td className="p-5">
                           <div className="font-semibold text-foreground flex items-center gap-1.5">
                             <Calendar className="w-4 h-4 text-primary" /> {formatDateToDDMMYYYY(order.pickupDate)}
                           </div>
@@ -661,9 +677,23 @@ export default function Admin() {
                           </span>
                         </td>
                         <td className="p-5 max-w-xs">
-                          <p className="text-foreground/80 leading-relaxed truncate hover:text-clip hover:whitespace-normal" title={order.notes || ""}>
-                            {order.notes || <span className="text-muted-foreground/60 italic text-xs">No notes</span>}
-                          </p>
+                          <div className="space-y-1.5">
+                            {order.notes && (
+                              <div>
+                                <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block">Customization Notes:</span>
+                                <p className="text-foreground/80 leading-relaxed break-words">{order.notes}</p>
+                              </div>
+                            )}
+                            {order.customChanges && (
+                              <div>
+                                <span className="text-[10px] text-black dark:text-white font-bold uppercase tracking-wider block">Changes Requested:</span>
+                                <p className="text-black dark:text-white font-bold leading-relaxed break-words">{order.customChanges}</p>
+                              </div>
+                            )}
+                            {!order.notes && !order.customChanges && (
+                              <span className="text-muted-foreground/60 italic text-xs">No notes</span>
+                            )}
+                          </div>
                         </td>
                         <td className="p-5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-6">
@@ -748,8 +778,24 @@ export default function Admin() {
                       )}
                       {order.notes && (
                         <p className="text-foreground/80 text-xs leading-relaxed mt-2 pt-2 border-t border-border/40 whitespace-pre-wrap">
-                          {order.notes}
+                          <strong>Notes:</strong> {order.notes}
                         </p>
+                      )}
+                      {order.customChanges && (
+                        <p className="text-black dark:text-white text-xs font-bold leading-relaxed mt-2 pt-2 border-t border-border/40 whitespace-pre-wrap">
+                          <strong>Changes:</strong> {order.customChanges}
+                        </p>
+                      )}
+                      {order.customImage && (
+                        <div className="mt-2 pt-2 border-t border-border/40">
+                          <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider block mb-1">Reference Design:</span>
+                          <img 
+                            src={order.customImage} 
+                            alt="Reference Design" 
+                            className="w-16 h-16 rounded object-cover border border-border cursor-pointer hover:opacity-90 transition-opacity animate-pulse"
+                            onClick={() => setZoomedImage(order.customImage || null)}
+                          />
+                        </div>
                       )}
                     </div>
 
@@ -806,6 +852,27 @@ export default function Admin() {
           )}
         </div>
       </main>
+
+      {zoomedImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 cursor-pointer"
+          onClick={() => setZoomedImage(null)}
+        >
+          <div className="relative max-w-3xl max-h-[85vh] overflow-hidden rounded-2xl bg-card border border-border p-1.5 shadow-2xl flex flex-col items-center">
+            <button 
+              className="absolute top-3 right-3 text-white bg-black/40 hover:bg-black/60 rounded-full p-2 backdrop-blur-md transition-all z-10"
+              onClick={() => setZoomedImage(null)}
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <img 
+              src={zoomedImage} 
+              alt="Reference Zoom" 
+              className="max-h-[80vh] w-auto max-w-full object-contain rounded-xl" 
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
