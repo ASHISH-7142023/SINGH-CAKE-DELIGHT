@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="dist/public/Main_Logo.jpg" alt="Singh Cake Delight Banner" width="160" style="border-radius: 50%; box-shadow: 0 8px 30px rgba(0,0,0,0.12); margin-bottom: 20px;" />
+  <img src="Main_Logo.jpg" alt="Singh Cake Delight Banner" width="160" style="border-radius: 50%; box-shadow: 0 8px 30px rgba(0,0,0,0.12); margin-bottom: 20px;" />
   
   # ✨ Singh Cake Delight ✨
   
