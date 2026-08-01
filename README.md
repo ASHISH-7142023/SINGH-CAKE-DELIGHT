@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="og-cake.png" alt="Singh Cake Delight Banner" width="160" style="border-radius: 50%; box-shadow: 0 8px 30px rgba(0,0,0,0.12); margin-bottom: 20px;" />
+  <img src="dist/public/Main Logo.jpg" alt="Singh Cake Delight Banner" width="160" style="border-radius: 50%; box-shadow: 0 8px 30px rgba(0,0,0,0.12); margin-bottom: 20px;" />
   
   # ✨ Singh Cake Delight ✨
   
@@ -45,7 +45,7 @@ The application uses a modern, highly-integrated TypeScript stack spanning clien
 | **Animations** | Framer Motion | Fluid animations, card entry hover layouts, and slide-in panels. |
 | **UI Components** | Shadcn UI (Radix Primitives) | Accessible, customizable design building blocks (Popovers, Calendars, Dialogs). |
 | **Server Engine** | Express.js (v5) | Handles REST API endpoints, security, and static single-page asset hosting. |
-| **Database & ORM** | SQLite + Drizzle ORM | Embeddable, reliable storage driven by a type-safe SQL query builder. |
+| **Database & ORM** | SQLite / Turso + Drizzle | Dynamic switching between local SQLite (better-sqlite3) and Cloud database (Turso libsql) via Drizzle ORM. |
 | **Validation** | Zod & Drizzle-Zod | Strict input validation ensuring fail-safe API payload matching. |
 | **Automation** | Nodemailer | Dynamic emails for admin logins, recovery OTPs, and system notifications. |
 | **Data Export** | SheetJS (xlsx) | Automatic and manual table synchronization to offline Microsoft Excel spreadsheets. |
@@ -110,6 +110,16 @@ flowchart TD
     *   **Manual Downloads**: Admins can click a button to download the entire SQLite database file, or export specialized tables as Excel sheets.
     *   **Configuration Manager**: Allows resetting passwords and checking active system logs inside the browser.
 
+### 4. Hybrid Database & Storage Hardening
+*   **Dynamic Provider Switching**: The application dynamically determines database connectivity based on environment presence:
+    *   **Cloud Mode**: Streams reads/writes via `@libsql/client` when `TURSO_DATABASE_URL` is defined.
+    *   **Local Mode**: Auto-falls back to a local SQLite instance utilizing `better-sqlite3`, storing assets inside the custom `DATA_DIR` folder.
+*   **Security & Hardening Lockdowns**:
+    *   **Restrictive Permissions**: Forces database and helper files (Write-Ahead Logging `-wal` and Shared Memory `-shm`) to strict owner-only access (`0o600` read/write locks).
+    *   **Forensic Scrubbing**: Invokes `secure_delete = ON` which overwrites deleted database records and tables with zero blocks to prevent physical disk forensics recovery.
+    *   **Volatile Caches**: Confines transient data allocations to RAM (`temp_store = MEMORY`), stopping internal query logs from spilling onto physical hard disks.
+    *   **Write-Ahead Logging**: Speeds up database lock recovery and facilitates concurrent queries via `journal_mode = WAL`.
+
 ---
 
 ## 📂 Project Directory Structure
@@ -162,7 +172,17 @@ flowchart TD
 ### 1. Environment Configuration
 Create a `.env` file in the root directory:
 ```env
+# Administrative Password
 ADMIN_PASSWORD=your_secure_password_here
+
+# Local SQLite Storage Directory (defaults to workspace root if omitted)
+DATA_DIR=./.local
+
+# Cloud Turso Credentials (optional; falls back to local SQLite if omitted)
+TURSO_DATABASE_URL=libsql://your-database-name.turso.io
+TURSO_AUTH_TOKEN=your_turso_token_here
+
+# SMTP Email Configuration (optional; logs to sent_emails.log if omitted)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your_email@gmail.com
