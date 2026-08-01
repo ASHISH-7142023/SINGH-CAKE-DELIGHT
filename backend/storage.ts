@@ -73,7 +73,7 @@ export class DatabaseStorage implements IStorage {
       .from(orders)
       .leftJoin(users, eq(orders.userId, users.id));
 
-    return results.map(r => ({
+    return results.map((r: any) => ({
       ...r.order,
       customerEmail: r.userEmail || null,
     }));

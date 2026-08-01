@@ -1,6 +1,8 @@
 import * as schema from "@shared/schema";
 import path from "path";
 import fs from "fs";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 
 export let db: any;
 export let sqlite: any = null;
