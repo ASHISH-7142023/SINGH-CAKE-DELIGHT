@@ -1198,80 +1198,102 @@ export async function registerRoutes(
 
 
       const existingGallery = await storage.getGalleryImages();
-      if (existingGallery.length === 0) {
-        await storage.createGalleryImage({ imageUrl: "ButterScotch-cake (2).jpeg", altText: "Chocolate Drip Cake" });
-        await storage.createGalleryImage({ imageUrl: "cup-cake2.jpeg", altText: "Cup Cake" });
-        await storage.createGalleryImage({ imageUrl: "golden-cake.jpeg", altText: "Golden Cake" });
-        await storage.createGalleryImage({ imageUrl: "Rasmalai-Cake.jpeg", altText: "Rasmalai Cake" });
-        await storage.createGalleryImage({ imageUrl: "Double-Chocolate-Candy-Bites.jpeg", altText: "Double Chocolate Candy Bites" });
-        await storage.createGalleryImage({ imageUrl: "Vanilla-Cake.jpeg", altText: "Vanilla Cake" });
-        await storage.createGalleryImage({ imageUrl: "2-small-cupcake.jpeg", altText: "2 Small Cupcake" });
-        await storage.createGalleryImage({ imageUrl: "Anniversary_bento-cake.jpeg", altText: "Anniversary Bento Cake" });
-        await storage.createGalleryImage({ imageUrl: "Anniversary-cake.jpeg", altText: "Anniversary Cake" });
-        await storage.createGalleryImage({ imageUrl: "bento-1.jpeg", altText: "Bento Cake" });
-        await storage.createGalleryImage({ imageUrl: "Rasmalai-cake-1.jpg", altText: "Rasmalai Cake" });
-        await storage.createGalleryImage({ imageUrl: "Fruits-Cake.jpeg", altText: "Fruits Cake" });
-        await storage.createGalleryImage({ imageUrl: "Romantic-Rose-Anniversary-Cake.jpg", altText: "Romantic Rose Anniversary Cake" });
-        await storage.createGalleryImage({ imageUrl: "bento-2.jpeg", altText: "Bento Cake" });
-        await storage.createGalleryImage({ imageUrl: "Black-forest-Cake.jpeg", altText: "Black Forest Cake" });
-        await storage.createGalleryImage({ imageUrl: "Butterfly-cake.jpeg", altText: "Butterfly Cake" });
-        await storage.createGalleryImage({ imageUrl: "Pink-Velvet-Starry-Cake.jpg", altText: "Pink Velvet Starry Cake" });
-        await storage.createGalleryImage({ imageUrl: "Butterscotch-Cake.jpeg", altText: "Butterscotch Cake" });
-        await storage.createGalleryImage({ imageUrl: "Butterscotch-og-cake.jpeg", altText: "Butterscotch Cake" });
-        await storage.createGalleryImage({ imageUrl: "Glass-Cake-3.jpeg", altText: "Triple Glass Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate Cake.jpeg", altText: "Chocolate Cake" });
-        await storage.createGalleryImage({ imageUrl: "Designed Chocolate-Cake.jpeg", altText: "Designed Chocolate Cake" });
-        await storage.createGalleryImage({ imageUrl: "Ring-Ceremony-Cake.jpg", altText: "Ring Ceremony Cake" });
-        await storage.createGalleryImage({ imageUrl: "TRI-Glass-Cake.jpeg", altText: "Tri Glass Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate_Cake_main.jpeg", altText: "Chocolate Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate Candy Bites.jpeg", altText: "Chocolate Candy Bites" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate_cake_2.png", altText: "Chocolate Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate_Cake.png", altText: "Chocolate Cake" });
-        await storage.createGalleryImage({ imageUrl: "Mom_Bday.jpeg", altText: "Mom's Birthday Cake" });
-        await storage.createGalleryImage({ imageUrl: "Pink-Rose-Cake.jpg", altText: "Pink Rose Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate-jar-cake-Open.jpeg", altText: "Chocolate Jar Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate-jar-cake.jpeg", altText: "Chocolate Open Jar Cake " });
-        await storage.createGalleryImage({ imageUrl: "2-Tier-Chocolate-Cake.jpeg", altText: "2 Tier Chocolate Cake " });
-        await storage.createGalleryImage({ imageUrl: "Assorted-Chocolate-High-Tea-Platter.jpg", altText: "Assorted Chocolate High Tea Platter" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate-chocochips.jpeg", altText: "Chocolate Choco-Chips Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate-Crunch-Overload-Cake.jpg", altText: "Chocolate Crunch Overload Cake" });
-        await storage.createGalleryImage({ imageUrl: "Strawberry Cake.jpeg", altText: "Strawberry Cake" });
-        await storage.createGalleryImage({ imageUrl: "Pink Velvet Floral Elegance Cake.jpeg", altText: "Pink Velvet Floral Elegance Cake" });
-        await storage.createGalleryImage({ imageUrl: "Teachers_Day.jpeg", altText: "Teacher's Day Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate-Fruits-Cake.jpeg", altText: "Chocolate Fruits Cake" });
-        await storage.createGalleryImage({ imageUrl: "cup-cake-3.jpeg", altText: "Cup Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate-Rose-Bouquet-Cake.jpg", altText: "Chocolate Rose Bouquet Cake" });
-        await storage.createGalleryImage({ imageUrl: "Cupcake-Match.jpeg", altText: "Cupcake Match" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate_Drip_Cake.jpeg", altText: "Chocolate Drip Cake" });
-        await storage.createGalleryImage({ imageUrl: "Pineapple_Cake.jpeg", altText: "Pineapple Cake" });
-        await storage.createGalleryImage({ imageUrl: "Strawberry_cake_2.jpeg", altText: "Strawberry Cake" });
-        await storage.createGalleryImage({ imageUrl: "Pink-Cake.jpeg", altText: "Pink Cake" });
-        await storage.createGalleryImage({ imageUrl: "KitKat-Premium-Bday-Cake.jpg", altText: "Kit Kat Premium Bday Cake" });
-        await storage.createGalleryImage({ imageUrl: "Glass_cake.jpg", altText: "Glass Cake" });
-        await storage.createGalleryImage({ imageUrl: "Combo.jpeg", altText: "Combo Of Glass Cake & Cup Cake" });
-        await storage.createGalleryImage({ imageUrl: "Maggie_Cake.jpg", altText: "Maggie's Cake" });
-        await storage.createGalleryImage({ imageUrl: "Elegant-Butterfly-Drip-Cake.jpg", altText: "Elegant Butterfly Drip Cake" });
-        await storage.createGalleryImage({ imageUrl: "cup-cake1.jpeg", altText: "Cup Cake" });
-        await storage.createGalleryImage({ imageUrl: "Choco_Drip_Black_Forest_Cake.webp", altText: "Choco Drip Black Forest Cake" });
-        await storage.createGalleryImage({ imageUrl: "Rainbow_Confetti_Cake.jpg", altText: "Rainbow Confetti Cake" });
-        await storage.createGalleryImage({ imageUrl: "Love-Anniversary-Cake.jpeg", altText: "Love Anniversary Cake" });
-        await storage.createGalleryImage({ imageUrl: "Glass-Cake.jpeg", altText: "Glass Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate_Bento_Drip_Cake.jpg", altText: "Chocolate Bento Drip Cake" });
-        await storage.createGalleryImage({ imageUrl: "1yr-Anniversary-Bento-Cake.jpg", altText: "1st Year Anniversary Bento Cake" });
-        await storage.createGalleryImage({ imageUrl: "18th_B'day_Chocolate_Bento_Cake_Upper.jpg", altText: "18th Birthday Chocolate Bento Cake" });
-        await storage.createGalleryImage({ imageUrl: "Yellow_Rose_B'day_Cake.jpg", altText: "Yellow Rose Birthday Cake" });
-        await storage.createGalleryImage({ imageUrl: "Vanilla-Cake-2.jpeg", altText: "Vanilla Cake" });
-        await storage.createGalleryImage({ imageUrl: "Grass-cake.jpeg", altText: "Grass Cake" });
-        await storage.createGalleryImage({ imageUrl: "Light_Chocolate_Birthday_Cake.jpg", altText: "Light Chocolate Birthday Cake" });
-        await storage.createGalleryImage({ imageUrl: "Floral_Purple_Bento_Cake.jpg", altText: "Floral Purple Bento Cake" });
-        await storage.createGalleryImage({ imageUrl: "Minimalist_Sage_Green_Bento_Cake.jpg", altText: "Minimalist Sage Green Bento Cake" });
-        await storage.createGalleryImage({ imageUrl: "Chocolate_Chip_Chocolate_Bento_Cake.jpg", altText: "Chocolate Chip Chocolate Bento Cake" });
-        await storage.createGalleryImage({ imageUrl: "Floral_Wreath_Bento_Cake.jpg", altText: "Floral Wreath Bento Cake" });
-        await storage.createGalleryImage({ imageUrl: "Fresh_Cream_Pineapple_B'day_Cake.jpg", altText: "Fresh Cream Pineapple Birthday Cake" });
+      const targetGallery = [
+        { imageUrl: "ButterScotch-cake (2).jpeg", altText: "Chocolate Drip Cake" },
+        { imageUrl: "cup-cake2.jpeg", altText: "Cup Cake" },
+        { imageUrl: "golden-cake.jpeg", altText: "Golden Cake" },
+        { imageUrl: "Rasmalai-Cake.jpeg", altText: "Rasmalai Cake" },
+        { imageUrl: "Double-Chocolate-Candy-Bites.jpeg", altText: "Double Chocolate Candy Bites" },
+        { imageUrl: "Vanilla-Cake.jpeg", altText: "Vanilla Cake" },
+        { imageUrl: "2-small-cupcake.jpeg", altText: "2 Small Cupcake" },
+        { imageUrl: "Anniversary_bento-cake.jpeg", altText: "Anniversary Bento Cake" },
+        { imageUrl: "Anniversary-cake.jpeg", altText: "Anniversary Cake" },
+        { imageUrl: "bento-1.jpeg", altText: "Bento Cake" },
+        { imageUrl: "Rasmalai-cake-1.jpg", altText: "Rasmalai Cake" },
+        { imageUrl: "Fruits-Cake.jpeg", altText: "Fruits Cake" },
+        { imageUrl: "Romantic-Rose-Anniversary-Cake.jpg", altText: "Romantic Rose Anniversary Cake" },
+        { imageUrl: "bento-2.jpeg", altText: "Bento Cake" },
+        { imageUrl: "Black-forest-Cake.jpeg", altText: "Black Forest Cake" },
+        { imageUrl: "Butterfly-cake.jpeg", altText: "Butterfly Cake" },
+        { imageUrl: "Pink-Velvet-Starry-Cake.jpg", altText: "Pink Velvet Starry Cake" },
+        { imageUrl: "Butterscotch-Cake.jpeg", altText: "Butterscotch Cake" },
+        { imageUrl: "Butterscotch-og-cake.jpeg", altText: "Butterscotch Cake" },
+        { imageUrl: "Glass-Cake-3.jpeg", altText: "Triple Glass Cake" },
+        { imageUrl: "Chocolate Cake.jpeg", altText: "Chocolate Cake" },
+        { imageUrl: "Designed Chocolate-Cake.jpeg", altText: "Designed Chocolate Cake" },
+        { imageUrl: "Ring-Ceremony-Cake.jpg", altText: "Ring Ceremony Cake" },
+        { imageUrl: "TRI-Glass-Cake.jpeg", altText: "Tri Glass Cake" },
+        { imageUrl: "Chocolate_Cake_main.jpeg", altText: "Chocolate Cake" },
+        { imageUrl: "Chocolate Candy Bites.jpeg", altText: "Chocolate Candy Bites" },
+        { imageUrl: "Chocolate_cake_2.png", altText: "Chocolate Cake" },
+        { imageUrl: "Chocolate_Cake.png", altText: "Chocolate Cake" },
+        { imageUrl: "Mom_Bday.jpeg", altText: "Mom's Birthday Cake" },
+        { imageUrl: "Pink-Rose-Cake.jpg", altText: "Pink Rose Cake" },
+        { imageUrl: "Chocolate-jar-cake-Open.jpeg", altText: "Chocolate Jar Cake" },
+        { imageUrl: "Chocolate-jar-cake.jpeg", altText: "Chocolate Open Jar Cake " },
+        { imageUrl: "2-Tier-Chocolate-Cake.jpeg", altText: "2 Tier Chocolate Cake " },
+        { imageUrl: "Assorted-Chocolate-High-Tea-Platter.jpg", altText: "Assorted Chocolate High Tea Platter" },
+        { imageUrl: "Chocolate-chocochips.jpeg", altText: "Chocolate Choco-Chips Cake" },
+        { imageUrl: "Chocolate-Crunch-Overload-Cake.jpg", altText: "Chocolate Crunch Overload Cake" },
+        { imageUrl: "Strawberry Cake.jpeg", altText: "Strawberry Cake" },
+        { imageUrl: "Pink Velvet Floral Elegance Cake.jpeg", altText: "Pink Velvet Floral Elegance Cake" },
+        { imageUrl: "Teachers_Day.jpeg", altText: "Teacher's Day Cake" },
+        { imageUrl: "Chocolate-Fruits-Cake.jpeg", altText: "Chocolate Fruits Cake" },
+        { imageUrl: "cup-cake-3.jpeg", altText: "Cup Cake" },
+        { imageUrl: "Chocolate-Rose-Bouquet-Cake.jpg", altText: "Chocolate Rose Bouquet Cake" },
+        { imageUrl: "Cupcake-Match.jpeg", altText: "Cupcake Match" },
+        { imageUrl: "Chocolate_Drip_Cake.jpeg", altText: "Chocolate Drip Cake" },
+        { imageUrl: "Pineapple_Cake.jpeg", altText: "Pineapple Cake" },
+        { imageUrl: "Strawberry_cake_2.jpeg", altText: "Strawberry Cake" },
+        { imageUrl: "Pink-Cake.jpeg", altText: "Pink Cake" },
+        { imageUrl: "KitKat-Premium-Bday-Cake.jpg", altText: "Kit Kat Premium Bday Cake" },
+        { imageUrl: "Glass_cake.jpg", altText: "Glass Cake" },
+        { imageUrl: "Combo.jpeg", altText: "Combo Of Glass Cake & Cup Cake" },
+        { imageUrl: "Maggie_Cake.jpg", altText: "Maggie's Cake" },
+        { imageUrl: "Elegant-Butterfly-Drip-Cake.jpg", altText: "Elegant Butterfly Drip Cake" },
+        { imageUrl: "cup-cake1.jpeg", altText: "Cup Cake" },
+        { imageUrl: "Choco_Drip_Black_Forest_Cake.webp", altText: "Choco Drip Black Forest Cake" },
+        { imageUrl: "Rainbow_Confetti_Cake.jpg", altText: "Rainbow Confetti Cake" },
+        { imageUrl: "Love-Anniversary-Cake.jpeg", altText: "Love Anniversary Cake" },
+        { imageUrl: "Glass-Cake.jpeg", altText: "Glass Cake" },
+        { imageUrl: "Chocolate_Bento_Drip_Cake.jpg", altText: "Chocolate Bento Drip Cake" },
+        { imageUrl: "1yr-Anniversary-Bento-Cake.jpg", altText: "1st Year Anniversary Bento Cake" },
+        { imageUrl: "18th_B'day_Chocolate_Bento_Cake_Upper.jpg", altText: "18th Birthday Chocolate Bento Cake" },
+        { imageUrl: "Yellow_Rose_B'day_Cake.jpg", altText: "Yellow Rose Birthday Cake" },
+        { imageUrl: "Vanilla-Cake-2.jpeg", altText: "Vanilla Cake" },
+        { imageUrl: "Grass-cake.jpeg", altText: "Grass Cake" },
+        { imageUrl: "Light_Chocolate_Birthday_Cake.jpg", altText: "Light Chocolate Birthday Cake" },
+        { imageUrl: "Floral_Purple_Bento_Cake.jpg", altText: "Floral Purple Bento Cake" },
+        { imageUrl: "Minimalist_Sage_Green_Bento_Cake.jpg", altText: "Minimalist Sage Green Bento Cake" },
+        { imageUrl: "Chocolate_Chip_Chocolate_Bento_Cake.jpg", altText: "Chocolate Chip Chocolate Bento Cake" },
+        { imageUrl: "Floral_Wreath_Bento_Cake.jpg", altText: "Floral Wreath Bento Cake" },
+        { imageUrl: "Fresh_Cream_Pineapple_B'day_Cake.jpg", altText: "Fresh Cream Pineapple Birthday Cake" },
+        { imageUrl: "Blueberry_Twilight_Floral_Cake.jpg", altText: "Blueberry Twilight Floral Cake" },
+        { imageUrl: "Blushing_Rose_Garden-Cake.jpg", altText: "Blushing Rose Garden Cake" },
+        { imageUrl: "Classic_Basketball_Slam_Dunk_Cake.jpg", altText: "Classic Basketball Slam Dunk Cake" },
+        { imageUrl: "Crimson_Mirror_Elegance_Glaze_Cake.jpg", altText: "Crimson Mirror Elegance Glaze Cake" },
+        { imageUrl: "Patriotic_Pride_Sponge_Cake.jpg", altText: "Patriotic Pride Sponge Cake" },
+        { imageUrl: "Royal_Fairy_Tale_Tiered_Cake.jpg", altText: "Royal Fairy Tale Tiered Cake" },
+        { imageUrl: "Royal_Lavender_Ribbon_Cake.jpg", altText: "Royal Lavender Ribbon Cake" },
+        { imageUrl: "Scarlet_Heart_Anniversary_Cake.jpg", altText: "Scarlet Heart Anniversary Cake" },
+        { imageUrl: "The_Pineapple_Abstract_Shard_Cake.jpg", altText: "The Pineapple Abstract Shard Cake" },
+        { imageUrl: "The_Sunshine_Clown_Carnival_Cake.jpg", altText: "The Sunshine Clown Carnival Cake" },
+        { imageUrl: "Vanilla_Peach_Blossom_Cake.jpg", altText: "Vanilla Peach Blossom Cake" },
+        { imageUrl: "White_Forest_Elegance_Cake.jpg", altText: "White Forest Elegance Cake" },
+        { imageUrl: "Amour_Blossom_Heart_Cake.jpg", altText: "Amour Blossom Heart Cake" },
+        { imageUrl: "Blushing_Bouquet_Anniversary_Two-Tier_Cake.jpg", altText: "Blushing Bouquet Anniversary Two Tier Cake" },
+        { imageUrl: "Blushing_Carnival_Rosewood_Cake.jpg", altText: "Blushing Carnival Rosewood Cake" },
+        { imageUrl: "Mint_Carnival_Sprinkle_Cake.jpg", altText: "Mint Carnival Sprinkle Cake" },
+        { imageUrl: "Onyx_Velvet_Blue_Rose_Cake.jpg", altText: "Onyx Velvet Blue Rose Cake" },
+        { imageUrl: "Pink_Ribbon_Rosette_Cake.jpg", altText: "Pink Ribbon Rosette Cake" }
+      ];
 
-
-        //await storage.createGalleryImage({ imageUrl: "", altText: "" });
-
+      for (const item of targetGallery) {
+        const hasImage = existingGallery.some(g => g.imageUrl === item.imageUrl);
+        if (!hasImage) {
+          await storage.createGalleryImage(item);
+          console.log(`[SEED] Dynamically added ${item.imageUrl} to gallery database.`);
+        }
       }
     } catch (e) {
       console.error("Failed to seed database:", e);
