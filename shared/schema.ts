@@ -1,9 +1,9 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { pgTable, text, integer, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = sqliteTable("users", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   phone: text("phone").notNull(),
@@ -11,22 +11,22 @@ export const users = sqliteTable("users", {
   createdAt: text("created_at").notNull(),
 });
 
-export const products = sqliteTable("products", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const products = pgTable("products", {
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description").notNull(),
   imageUrl: text("image_url").notNull(),
   category: text("category").notNull(), 
 });
 
-export const galleryImages = sqliteTable("gallery_images", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const galleryImages = pgTable("gallery_images", {
+  id: serial("id").primaryKey(),
   imageUrl: text("image_url").notNull(),
   altText: text("alt_text").notNull(),
 });
 
-export const orders = sqliteTable("orders", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
   userId: integer("user_id").references(() => users.id),
   customerName: text("customer_name").notNull(),
   customerPhone: text("customer_phone").notNull(),

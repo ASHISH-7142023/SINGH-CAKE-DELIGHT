@@ -31,9 +31,8 @@ loadEnv();
 export default defineConfig({
   out: "./migrations",
   schema: "./shared/schema.ts",
-  dialect: process.env.TURSO_DATABASE_URL ? "turso" : "sqlite",
+  dialect: "postgresql",
   dbCredentials: {
-    url: process.env.TURSO_DATABASE_URL || "./sqlite.db",
-    authToken: process.env.TURSO_AUTH_TOKEN,
+    url: process.env.DATABASE_URL || "postgres://postgres:postgres@localhost:5432/singhcakedelight",
   },
 });
