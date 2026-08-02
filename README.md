@@ -10,7 +10,7 @@
   [![React](https://img.shields.io/badge/Frontend-React%2018-pink?style=for-the-badge&logo=react)](https://reactjs.org/)
   [![TypeScript](https://img.shields.io/badge/Language-TypeScript-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
   [![Express](https://img.shields.io/badge/Server-Express%205-lightgrey?style=for-the-badge&logo=express)](https://expressjs.com/)
-  [![SQLite](https://img.shields.io/badge/Database-SQLite%203-blueviolet?style=for-the-badge&logo=sqlite)](https://www.sqlite.org/)
+  [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-blue?style=for-the-badge&logo=postgresql)](https://www.postgresql.org/)
   [![Drizzle ORM](https://img.shields.io/badge/ORM-Drizzle%20ORM-orange?style=for-the-badge)](https://orm.drizzle.team/)
   [![Tailwind CSS](https://img.shields.io/badge/Styles-Tailwind%20CSS-38bdf8?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com/)
 
@@ -45,7 +45,7 @@ The application uses a modern, highly-integrated TypeScript stack spanning clien
 | **Animations** | Framer Motion | Fluid animations, card entry hover layouts, and slide-in panels. |
 | **UI Components** | Shadcn UI (Radix Primitives) | Accessible, customizable design building blocks (Popovers, Calendars, Dialogs). |
 | **Server Engine** | Express.js (v5) | Handles REST API endpoints, security, and static single-page asset hosting. |
-| **Database & ORM** | SQLite / Turso + Drizzle | Dynamic switching between local SQLite (better-sqlite3) and Cloud database (Turso libsql) via Drizzle ORM. |
+| **Database & ORM** | PostgreSQL + Drizzle | Node-Postgres connection engine and Drizzle ORM connecting to local/cloud Postgres instances. |
 | **Validation** | Zod & Drizzle-Zod | Strict input validation ensuring fail-safe API payload matching. |
 | **Automation** | Nodemailer | Dynamic emails for admin logins, recovery OTPs, and system notifications. |
 | **Data Export** | SheetJS (xlsx) | Automatic and manual table synchronization to offline Microsoft Excel spreadsheets. |
@@ -98,7 +98,7 @@ flowchart TD
 *   **Time & Schedule Safeguards**:
     *   **The 4-Day Rule**: The date-picker locks out dates less than **4 days in advance**, giving bakers ample time to source ingredients and prepare custom designs.
     *   **Opening Hours Safeguard**: Order times are strictly verified to fall between **7:00 AM and 8:00 PM**.
-*   **Submit & Sync**: Upon submission, the order is registered as `pending` in the SQLite database, which automatically kicks off an background synchronization routine to backup the table to an Excel file.
+*   **Submit & Sync**: Upon submission, the order is registered as `pending` in the PostgreSQL database, which automatically kicks off a background synchronization routine to backup the table to an Excel file.
 *   **Redirection to WhatsApp**: The customer receives a success popup and is prompted to click a direct link. This opens a secure WhatsApp thread with the bakery owner, carrying a pre-filled, templated message containing their Order ID, cake request, and pickup date to finalize customization.
 
 ### 3. Admin Dashboard Control Loop
@@ -110,15 +110,9 @@ flowchart TD
     *   **Manual Downloads**: Admins can click a button to download the entire SQLite database file, or export specialized tables as Excel sheets.
     *   **Configuration Manager**: Allows resetting passwords and checking active system logs inside the browser.
 
-### 4. Hybrid Database & Storage Hardening
-*   **Dynamic Provider Switching**: The application dynamically determines database connectivity based on environment presence:
-    *   **Cloud Mode**: Streams reads/writes via `@libsql/client` when `TURSO_DATABASE_URL` is defined.
-    *   **Local Mode**: Auto-falls back to a local SQLite instance utilizing `better-sqlite3`, storing assets inside the custom `DATA_DIR` folder.
-*   **Security & Hardening Lockdowns**:
-    *   **Restrictive Permissions**: Forces database and helper files (Write-Ahead Logging `-wal` and Shared Memory `-shm`) to strict owner-only access (`0o600` read/write locks).
-    *   **Forensic Scrubbing**: Invokes `secure_delete = ON` which overwrites deleted database records and tables with zero blocks to prevent physical disk forensics recovery.
-    *   **Volatile Caches**: Confines transient data allocations to RAM (`temp_store = MEMORY`), stopping internal query logs from spilling onto physical hard disks.
-    *   **Write-Ahead Logging**: Speeds up database lock recovery and facilitates concurrent queries via `journal_mode = WAL`.
+### 4. PostgreSQL Database & Connection Pooling
+*   **Node-Postgres Connection Pooling**: Utilizes a highly optimized `pg.Pool` connection pooler to manage connections efficiently and scale cleanly.
+*   **Dynamic Secure SSL Settings**: Dynamically whitelists and forces SSL/TLS connections when deploying to cloud providers like Neon Postgres or when run under production environments.
 
 ---
 
@@ -127,7 +121,7 @@ flowchart TD
 ```text
 ├── backend/               # Express server implementation
 │   ├── auth.ts            # Password hashing, verification, & session cookies
-│   ├── db.ts              # SQLite database configuration via Drizzle
+│   ├── db.ts              # PostgreSQL database configuration via Drizzle
 │   ├── email.ts           # SMTP Nodemailer configs & local audit logging fallback
 │   ├── excel.ts           # Spreadsheet export & sync logic (SheetJS)
 │   ├── index.ts           # Global server setup, CSP (Helmet), & static file router
@@ -175,12 +169,8 @@ Create a `.env` file in the root directory:
 # Administrative Password
 ADMIN_PASSWORD=your_secure_password_here
 
-# Local SQLite Storage Directory (defaults to workspace root if omitted)
-DATA_DIR=./.local
-
-# Cloud Turso Credentials (optional; falls back to local SQLite if omitted)
-TURSO_DATABASE_URL=libsql://your-database-name.turso.io
-TURSO_AUTH_TOKEN=your_turso_token_here
+# PostgreSQL Database Connection URL (required)
+DATABASE_URL="postgres://username:password@hostname:5432/database?sslmode=require"
 
 # SMTP Email Configuration (optional; logs to sent_emails.log if omitted)
 SMTP_HOST=smtp.gmail.com
