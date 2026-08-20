@@ -9,6 +9,7 @@ import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
 import { setupAuth } from "./auth";
 import { syncAllTablesToExcel } from "./excel";
+import { syncAllTablesToGoogleSheets } from "./googleSheets";
 import { migrateDatabaseTimestamps } from "./migration";
 
 import { readFileSync, existsSync } from "fs";
@@ -177,6 +178,7 @@ app.use((req, res, next) => {
     console.log("[DB] PostgreSQL database initialized and verified successfully.");
     await migrateDatabaseTimestamps();
     await syncAllTablesToExcel();
+    await syncAllTablesToGoogleSheets();
   } catch (err: any) {
     console.error("⚠️ [DB] Failed to execute startup PostgreSQL table checks/creations:", err.message || err);
   }

@@ -6,6 +6,7 @@ import {
 } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import { exportTableToExcel } from "./excel";
+import { syncTableToGoogleSheets } from "./googleSheets";
 
 export function getIndianTimeString(): string {
   const dateObj = new Date();
@@ -51,6 +52,7 @@ export class DatabaseStorage implements IStorage {
   async createProduct(product: InsertProduct): Promise<Product> {
     const [newProduct] = await db.insert(products).values(product).returning();
     exportTableToExcel("products");
+    syncTableToGoogleSheets("products").catch(console.error);
     return newProduct;
   }
 
@@ -61,6 +63,7 @@ export class DatabaseStorage implements IStorage {
   async createGalleryImage(image: InsertGalleryImage): Promise<GalleryImage> {
     const [newImage] = await db.insert(galleryImages).values(image).returning();
     exportTableToExcel("gallery_images");
+    syncTableToGoogleSheets("gallery_images").catch(console.error);
     return newImage;
   }
 
@@ -86,6 +89,7 @@ export class DatabaseStorage implements IStorage {
       createdAt: getIndianTimeString(),
     }).returning();
     exportTableToExcel("orders");
+    syncTableToGoogleSheets("orders").catch(console.error);
     return newOrder;
   }
 
@@ -98,12 +102,14 @@ export class DatabaseStorage implements IStorage {
       throw new Error(`Order with id ${id} not found`);
     }
     exportTableToExcel("orders");
+    syncTableToGoogleSheets("orders").catch(console.error);
     return updatedOrder;
   }
 
   async deleteOrder(id: number): Promise<void> {
     await db.delete(orders).where(eq(orders.id, id));
     exportTableToExcel("orders");
+    syncTableToGoogleSheets("orders").catch(console.error);
   }
 
   // User Authentication and Profiles
@@ -123,6 +129,7 @@ export class DatabaseStorage implements IStorage {
       createdAt: getIndianTimeString(),
     }).returning();
     exportTableToExcel("users");
+    syncTableToGoogleSheets("users").catch(console.error);
     return newUser;
   }
 
@@ -135,6 +142,7 @@ export class DatabaseStorage implements IStorage {
       .set({ password: passwordHash })
       .where(eq(users.id, id));
     exportTableToExcel("users");
+    syncTableToGoogleSheets("users").catch(console.error);
   }
 }
 
