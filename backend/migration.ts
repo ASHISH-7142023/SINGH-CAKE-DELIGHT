@@ -1,6 +1,6 @@
-import { db } from "./db";
-import { users, orders } from "../shared/schema";
-import { exportTableToExcel } from "./excel";
+import { db } from "./db.js";
+import { users, orders } from "../shared/schema.js";
+import { exportTableToExcel } from "./excel.js";
 import { eq } from "drizzle-orm";
 
 function formatIsoToIndianTime(isoStr: string): string {

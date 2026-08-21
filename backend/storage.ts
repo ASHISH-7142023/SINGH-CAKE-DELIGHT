@@ -1,12 +1,12 @@
-import { db } from "./db";
+import { db } from "./db.js";
 import { 
   products, galleryImages, orders, users,
   type Product, type GalleryImage, type Order, type User,
   type InsertProduct, type InsertGalleryImage, type InsertOrder, type InsertUser 
-} from "../shared/schema";
+} from "../shared/schema.js";
 import { eq } from "drizzle-orm";
-import { exportTableToExcel } from "./excel";
-import { syncTableToGoogleSheets } from "./googleSheets";
+import { exportTableToExcel } from "./excel.js";
+import { syncTableToGoogleSheets } from "./googleSheets.js";
 
 export function getIndianTimeString(): string {
   const dateObj = new Date();

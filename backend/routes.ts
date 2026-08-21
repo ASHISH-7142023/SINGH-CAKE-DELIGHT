@@ -1,12 +1,12 @@
 import type { Express } from "express";
 import type { Server } from "http";
-import { storage } from "./storage";
-import { api } from "../shared/routes";
+import { storage } from "./storage.js";
+import { api } from "../shared/routes.js";
 import { rateLimit } from "express-rate-limit";
-import { insertOrderSchema, insertUserSchema, products } from "../shared/schema";
-import { hashPassword, comparePasswords } from "./auth";
-import { sendEmailNotification } from "./email";
-import { db } from "./db";
+import { insertOrderSchema, insertUserSchema, products } from "../shared/schema.js";
+import { hashPassword, comparePasswords } from "./auth.js";
+import { sendEmailNotification } from "./email.js";
+import { db } from "./db.js";
 import { eq } from "drizzle-orm";
 import fs from "fs";
 import path from "path";

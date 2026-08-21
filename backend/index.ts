@@ -1,16 +1,16 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { serveStatic } from "./static";
+import { registerRoutes } from "./routes.js";
+import { serveStatic } from "./static.js";
 import { createServer } from "http";
-import { db } from "./db";
-import { products, galleryImages } from "../shared/schema";
+import { db } from "./db.js";
+import { products, galleryImages } from "../shared/schema.js";
 import { sql } from "drizzle-orm";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";
-import { setupAuth } from "./auth";
-import { syncAllTablesToExcel } from "./excel";
-import { syncAllTablesToGoogleSheets } from "./googleSheets";
-import { migrateDatabaseTimestamps } from "./migration";
+import { setupAuth } from "./auth.js";
+import { syncAllTablesToExcel } from "./excel.js";
+import { syncAllTablesToGoogleSheets } from "./googleSheets.js";
+import { migrateDatabaseTimestamps } from "./migration.js";
 
 import { readFileSync, existsSync } from "fs";
 import { join } from "path";

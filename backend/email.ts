@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import fs from "fs";
 import path from "path";
-import { log } from "./index";
+import { log } from "./index.js";
 
 const SMTP_HOST = process.env.SMTP_HOST;
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587");
