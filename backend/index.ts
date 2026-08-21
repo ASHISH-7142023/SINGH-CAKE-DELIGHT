@@ -129,84 +129,95 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  try {
-    // Ensure PostgreSQL tables exist before anything else on startup
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        phone TEXT NOT NULL,
-        password TEXT,
-        created_at TEXT NOT NULL
-      );
-    `);
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS products (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        description TEXT NOT NULL,
-        image_url TEXT NOT NULL,
-        category TEXT NOT NULL
-      );
-    `);
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS gallery_images (
-        id SERIAL PRIMARY KEY,
-        image_url TEXT NOT NULL,
-        alt_text TEXT NOT NULL
-      );
-    `);
-    await db.execute(sql`
-      CREATE TABLE IF NOT EXISTS orders (
-        id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        customer_name TEXT NOT NULL,
-        customer_phone TEXT NOT NULL,
-        cake_name TEXT,
-        cake_image TEXT,
-        notes TEXT,
-        custom_image TEXT,
-        custom_changes TEXT,
-        pickup_date TEXT NOT NULL,
-        pickup_time TEXT NOT NULL,
-        status TEXT NOT NULL,
-        created_at TEXT NOT NULL
-      );
-    `);
-    console.log("[DB] PostgreSQL database initialized and verified successfully.");
-    await migrateDatabaseTimestamps();
-    await syncAllTablesToExcel();
-    await syncAllTablesToGoogleSheets();
-  } catch (err: any) {
-    console.error("⚠️ [DB] Failed to execute startup PostgreSQL table checks/creations:", err.message || err);
+// Register routes immediately on startup
+registerRoutes(httpServer, app).catch((err) => {
+  console.error("[Startup] Failed to register routes:", err);
+});
+
+// Setup error handler middleware
+app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || "Internal Server Error";
+
+  console.error("Internal Server Error:", err);
+
+  if (res.headersSent) {
+    return next(err);
   }
 
-  await registerRoutes(httpServer, app);
+  return res.status(status).json({ message });
+});
 
-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    console.error("Internal Server Error:", err);
-
-    if (res.headersSent) {
-      return next(err);
+// Setup static files or Vite
+if (process.env.NODE_ENV === "production") {
+  serveStatic(app);
+} else {
+  // Vite setup is async, so we wrap it
+  (async () => {
+    try {
+      const { setupVite } = await import("./vite");
+      await setupVite(httpServer, app);
+    } catch (err) {
+      console.error("[Vite] Failed to setup Vite:", err);
     }
+  })();
+}
 
-    return res.status(status).json({ message });
-  });
-
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else {
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
-  }
+// Background database check and initial sync (disabled on Vercel to prevent cold-start crashes)
+if (!process.env.VERCEL) {
+  (async () => {
+    try {
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS users (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL UNIQUE,
+          phone TEXT NOT NULL,
+          password TEXT,
+          created_at TEXT NOT NULL
+        );
+      `);
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS products (
+          id SERIAL PRIMARY KEY,
+          name TEXT NOT NULL,
+          description TEXT NOT NULL,
+          image_url TEXT NOT NULL,
+          category TEXT NOT NULL
+        );
+      `);
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS gallery_images (
+          id SERIAL PRIMARY KEY,
+          image_url TEXT NOT NULL,
+          alt_text TEXT NOT NULL
+        );
+      `);
+      await db.execute(sql`
+        CREATE TABLE IF NOT EXISTS orders (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id),
+          customer_name TEXT NOT NULL,
+          customer_phone TEXT NOT NULL,
+          cake_name TEXT,
+          cake_image TEXT,
+          notes TEXT,
+          custom_image TEXT,
+          custom_changes TEXT,
+          pickup_date TEXT NOT NULL,
+          pickup_time TEXT NOT NULL,
+          status TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        );
+      `);
+      console.log("[DB] PostgreSQL database initialized and verified successfully.");
+      await migrateDatabaseTimestamps();
+      await syncAllTablesToExcel();
+      await syncAllTablesToGoogleSheets();
+    } catch (err: any) {
+      console.error("⚠️ [DB] Failed to execute startup PostgreSQL table checks/creations:", err.message || err);
+    }
+  })();
 
   const port = parseInt(process.env.PORT || "3000", 10);
   httpServer.listen(
@@ -218,4 +229,6 @@ app.use((req, res, next) => {
       log(`serving on port ${port}`);
     },
   );
-})();
+}
+
+export default app;
