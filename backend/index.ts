@@ -3,7 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import { db } from "./db";
-import { products, galleryImages } from "@shared/schema";
+import { products, galleryImages } from "../shared/schema";
 import { sql } from "drizzle-orm";
 import helmet from "helmet";
 import { rateLimit } from "express-rate-limit";

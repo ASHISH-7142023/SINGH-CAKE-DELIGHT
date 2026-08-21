@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { users, orders } from "@shared/schema";
+import { users, orders } from "../shared/schema";
 import { exportTableToExcel } from "./excel";
 import { eq } from "drizzle-orm";
 

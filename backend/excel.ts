@@ -2,7 +2,7 @@ import XLSX from "xlsx";
 import path from "path";
 import fs from "fs";
 import { db } from "./db";
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema";
 
 const dataDir = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : process.cwd();
 const EXPORTS_DIR = path.resolve(dataDir, "exports");

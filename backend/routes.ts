@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import type { Server } from "http";
 import { storage } from "./storage";
-import { api } from "@shared/routes";
+import { api } from "../shared/routes";
 import { rateLimit } from "express-rate-limit";
-import { insertOrderSchema, insertUserSchema, products } from "@shared/schema";
+import { insertOrderSchema, insertUserSchema, products } from "../shared/schema";
 import { hashPassword, comparePasswords } from "./auth";
 import { sendEmailNotification } from "./email";
 import { db } from "./db";

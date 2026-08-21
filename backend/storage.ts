@@ -3,7 +3,7 @@ import {
   products, galleryImages, orders, users,
   type Product, type GalleryImage, type Order, type User,
   type InsertProduct, type InsertGalleryImage, type InsertOrder, type InsertUser 
-} from "@shared/schema";
+} from "../shared/schema";
 import { eq } from "drizzle-orm";
 import { exportTableToExcel } from "./excel";
 import { syncTableToGoogleSheets } from "./googleSheets";

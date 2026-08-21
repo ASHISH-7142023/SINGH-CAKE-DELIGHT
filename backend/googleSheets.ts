@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { eq } from "drizzle-orm";
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema";
 import crypto from "crypto";
 
 /**

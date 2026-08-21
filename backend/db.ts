@@ -1,4 +1,4 @@
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema";
 import pg from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { readFileSync, existsSync } from "fs";
