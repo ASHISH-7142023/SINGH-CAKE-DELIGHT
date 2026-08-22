@@ -158,6 +158,7 @@ export async function syncTableToGoogleSheets(tableName: string): Promise<void> 
 
       rows = results.map((r: any) => ({
         ...r.order,
+        customImage: r.order.customImage ? "Base64 Image Data (omitted for Google Sheets)" : null,
         customerEmail: r.userEmail || null,
       }));
     } else {

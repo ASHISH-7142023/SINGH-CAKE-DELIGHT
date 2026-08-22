@@ -27,7 +27,11 @@ export async function exportTableToExcel(tableName: string) {
     } else if (tableName === "gallery_images") {
       rows = await db.select().from(schema.galleryImages);
     } else if (tableName === "orders") {
-      rows = await db.select().from(schema.orders);
+      const dbRows = await db.select().from(schema.orders);
+      rows = dbRows.map(r => ({
+        ...r,
+        customImage: r.customImage ? "Base64 Image Data (omitted for Excel)" : null
+      }));
     }
     
     // Convert to Excel workbook
