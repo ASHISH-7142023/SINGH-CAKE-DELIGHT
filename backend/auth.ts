@@ -1,7 +1,6 @@
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import session from "express-session";
-import createMemoryStore from "memorystore";
+import cookieSession from "cookie-session";
 import type { Express } from "express";
 
 const scryptAsync = promisify(scrypt);
@@ -21,22 +20,15 @@ export async function comparePasswords(supplied: string, stored: string): Promis
 }
 
 export function setupAuth(app: Express) {
-  const MemoryStore = createMemoryStore(session);
   const sessionSecret = process.env.SESSION_SECRET || "singh-cake-secret-key-1891";
 
   app.use(
-    session({
-      secret: sessionSecret,
-      resave: false,
-      saveUninitialized: false,
-      store: new MemoryStore({
-        checkPeriod: 86400000, // prune expired entries every 24h
-      }),
-      cookie: {
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-        secure: false, // Set to true if running over HTTPS
-        sameSite: "lax",
-      },
+    cookieSession({
+      name: "session",
+      keys: [sessionSecret],
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      secure: false,
+      sameSite: "lax",
     })
   );
 }

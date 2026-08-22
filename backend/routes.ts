@@ -43,9 +43,15 @@ function updateAdminPasswordInEnv(newPassword: string) {
   }
 }
 
-declare module "express-session" {
-  interface SessionData {
-    userId: number;
+// Declare custom session properties for cookie-session type-safety
+declare global {
+  namespace Express {
+    interface Request {
+      session?: {
+        userId?: number;
+        [key: string]: any;
+      } | null;
+    }
   }
 }
 
@@ -413,7 +419,7 @@ export async function registerRoutes(
         password: hashedPassword,
       });
 
-      req.session.userId = user.id;
+      req.session!.userId = user.id;
 
       // Send signup email
       const emailSubject = "🍰 Welcome to Singh Cake Delight!";
@@ -470,7 +476,7 @@ export async function registerRoutes(
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
-      req.session.userId = user.id;
+      req.session!.userId = user.id;
 
       // Send login email notification
       const emailSubject = "🔒 Singh Cake Delight - Successful Login Notification";
@@ -657,7 +663,7 @@ export async function registerRoutes(
         sendEmailNotification(user.email, emailSubject, emailHtml).catch(console.error);
       }
 
-      req.session.userId = user.id;
+      req.session!.userId = user.id;
 
       const { password: _, ...safeUser } = user;
       res.json(safeUser);
@@ -668,24 +674,19 @@ export async function registerRoutes(
   });
 
   app.post("/api/logout", (req, res) => {
-    req.session.destroy((err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).json({ message: "Failed to logout" });
-      }
-      res.clearCookie("connect.sid");
-      res.sendStatus(204);
-    });
+    req.session = null;
+    res.clearCookie("session");
+    res.sendStatus(204);
   });
 
   app.get("/api/me", async (req, res) => {
-    if (!req.session.userId) {
+    if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     try {
       const user = await storage.getUser(req.session.userId);
       if (!user) {
-        req.session.destroy(() => {});
+        req.session = null;
         return res.status(401).json({ message: "User not found" });
       }
       const { password: _, ...safeUser } = user;
@@ -697,7 +698,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/me/orders", async (req, res) => {
-    if (!req.session.userId) {
+    if (!req.session || !req.session.userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
     try {
@@ -735,7 +736,7 @@ export async function registerRoutes(
       }
       
       // Get associated user if logged in
-      const userId = req.session.userId || null;
+      const userId = req.session?.userId || null;
       
       // Validate pickup time range (7:00 AM to 8:00 PM)
       const [pickupHour, pickupMinute] = parsedBody.pickupTime.split(":").map(Number);
