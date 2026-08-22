@@ -12,6 +12,7 @@ import { Navbar } from "@/components/Navbar";
 import { FloatingActions } from "@/components/FloatingActions";
 import { Footer } from "@/components/Footer";
 import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -22,6 +23,7 @@ import { useIsDark } from "@/hooks/use-is-dark";
 export default function Home() {
   const isDark = useIsDark();
   const queryClient = useQueryClient();
+  const [, setLocation] = useLocation();
   const { data: products, isLoading: isLoadingProducts } = useProducts();
   const { data: gallery, isLoading: isLoadingGallery } = useGallery();
 
@@ -181,6 +183,11 @@ export default function Home() {
   };
 
   const handleOrder = (productName?: string, productImage?: string) => {
+    if (!user) {
+      alert("🔒 Please log in or sign up first to place an order and track its status.");
+      setLocation("/auth");
+      return;
+    }
     setSelectedOrderCake({
       name: productName || "Custom Customization Inquiry",
       imageUrl: productImage || ""
