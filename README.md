@@ -48,6 +48,7 @@ The application uses a modern, highly-integrated TypeScript stack spanning clien
 | **Database & ORM** | PostgreSQL + Drizzle | Node-Postgres connection engine and Drizzle ORM connecting to local/cloud Postgres instances. |
 | **Validation** | Zod & Drizzle-Zod | Strict input validation ensuring fail-safe API payload matching. |
 | **Automation** | Nodemailer | Dynamic emails for admin logins, recovery OTPs, and system notifications. |
+| **Cloud Sync** | Google Sheets REST API | Real-time service-account integration replicating users, catalog, and orders onto Google Sheets. |
 | **Data Export** | SheetJS (xlsx) | Automatic and manual table synchronization to offline Microsoft Excel spreadsheets. |
 | **Security** | Helmet & Express Rate Limit | Enforces strict CSP and rate-limiting rules to prevent spam and Stored XSS. |
 | **Build Tools** | Vite & tsx | High-speed bundler and hot-module server execution scripts. |
@@ -68,7 +69,7 @@ flowchart TD
         C_Browse --> C_Form[Fill Booking Form]
         C_Form --> C_Val{"Validate Schedule<br>(Date >= Today+4 Days & Time 7 AM - 8 PM)"}
         C_Val -- Invalid --> C_Form
-        C_Val -- Valid --> C_Save[Save Order & Trigger Auto Excel Sync]
+        C_Val -- Valid --> C_Save[Save Order & Trigger Cloud / Excel Sync]
         C_Save --> C_Confirm[Order Submitted Toast]
         C_Confirm --> C_WA[WhatsApp Order Finalization Redirect]
     end
@@ -77,10 +78,10 @@ flowchart TD
         A_Start([Admin Login]) --> A_Alert[Email Security Alert Dispatched]
         A_Alert --> A_Dash[Access Dashboard]
         A_Dash --> A_Manage[Manage Catalog / Gallery Images]
-        A_Dash --> A_Orders[Track Live Orders Grid]
+        A_Orders[Track Live Orders Grid]
         A_Orders --> A_Update[Change Order Status]
         A_Orders --> A_Contact[Contact Customer via Pre-filled WA Link]
-        A_Dash --> A_Backup[Sync & Download DB as Excel Spreadsheets]
+        A_Dash --> A_Backup[Sync & Download Tables as Excel Spreadsheets]
     end
 
     class C_Start,A_Start actor;
@@ -88,31 +89,26 @@ flowchart TD
 ```
 
 ### 1. User & Admin Authentication Flow
-*   **Customer Auth**: Standard registration and session-cookie login. Features clean forms with immediate feedback. Includes Google OAuth options.
+*   **Customer Auth**: Standard registration and session-cookie login. Features clean forms with immediate feedback.
 *   **Admin Shield**: The Admin Dashboard is restricted to a dedicated email. Upon successful authentication:
     *   **Email Alert Dispatch**: The server geolocates the incoming IP address (using IP-API), parses the device User-Agent, formats the timestamps into Indian Standard Time (IST), and emails a stylized security alert to the admin inbox.
-    *   **Secure OTP Loop**: Forgotten admin passwords trigger a 6-digit verification code sent via Nodemailer. Once verified, the server hashes the new password using bcrypt/scrypt, updates the database, writes it directly back to the secure `.env` file, and pushes it to active memory.
+    *   **Secure OTP Loop**: Forgotten admin passwords trigger a 6-digit verification code sent via Nodemailer. Once verified, the server hashes the new password using scrypt, updates the database, writes it directly back to the secure `.env` file, and pushes it to active memory.
 
 ### 2. Customer Custom Order Scheduling Workflow
 *   **Interactive Designer & Form**: Customers can select a standard catalog cake or build a custom layout. They can input customization notes, list requested modifications, and upload a custom image (restricted to `<2MB` base64 format).
 *   **Time & Schedule Safeguards**:
     *   **The 4-Day Rule**: The date-picker locks out dates less than **4 days in advance**, giving bakers ample time to source ingredients and prepare custom designs.
     *   **Opening Hours Safeguard**: Order times are strictly verified to fall between **7:00 AM and 8:00 PM**.
-*   **Submit & Sync**: Upon submission, the order is registered as `pending` in the PostgreSQL database, which automatically kicks off a background synchronization routine to backup the table to an Excel file.
+*   **Submit & Sync**: Upon submission, the order is registered as `pending` in the PostgreSQL database, which automatically kicks off background synchronization routines to Google Sheets and offline Excel backups.
 *   **Redirection to WhatsApp**: The customer receives a success popup and is prompted to click a direct link. This opens a secure WhatsApp thread with the bakery owner, carrying a pre-filled, templated message containing their Order ID, cake request, and pickup date to finalize customization.
 
 ### 3. Admin Dashboard Control Loop
-*   **Live Order Tracking Grid**: Displayed in a responsive, desktop table and mobile card layout. Admins can view order states, details, custom notes, and click customer references to open an high-fidelity fullscreen image preview overlay.
+*   **Live Order Tracking Grid**: Displayed in a responsive table layout. Admins can view order states, details, custom notes, and click customer references to open a fullscreen image preview overlay.
 *   **Status Management**: Admins can change order status (Pending ⇄ Completed) with a single click, or permanently delete requests.
 *   **Art Catalog & Gallery Control**: Admins can add, edit, or delete items directly from the catalog (which updates the customer menu in real-time) and manage the home gallery images.
 *   **Database Excel Backups & Settings**:
-    *   **Auto Sync**: Database updates automatically sync to Excel tables.
-    *   **Manual Downloads**: Admins can click a button to download the entire SQLite database file, or export specialized tables as Excel sheets.
+    *   **Auto Sync**: Database updates automatically sync to Excel and Google Sheets tables.
     *   **Configuration Manager**: Allows resetting passwords and checking active system logs inside the browser.
-
-### 4. PostgreSQL Database & Connection Pooling
-*   **Node-Postgres Connection Pooling**: Utilizes a highly optimized `pg.Pool` connection pooler to manage connections efficiently and scale cleanly.
-*   **Dynamic Secure SSL Settings**: Dynamically whitelists and forces SSL/TLS connections when deploying to cloud providers like Neon Postgres or when run under production environments.
 
 ---
 
@@ -124,6 +120,7 @@ flowchart TD
 │   ├── db.ts              # PostgreSQL database configuration via Drizzle
 │   ├── email.ts           # SMTP Nodemailer configs & local audit logging fallback
 │   ├── excel.ts           # Spreadsheet export & sync logic (SheetJS)
+│   ├── googleSheets.ts    # Google Sheets API client & in-memory JWT signer
 │   ├── index.ts           # Global server setup, CSP (Helmet), & static file router
 │   ├── migration.ts       # Database migrations & structure initialization
 │   ├── routes.ts          # API Endpoints (Auth, Orders, Products, OTP, Metrics)
@@ -162,6 +159,7 @@ flowchart TD
 ### Prerequisites
 *   Node.js (v18 or higher)
 *   npm or yarn
+*   PostgreSQL instance (local or cloud like Supabase/Neon)
 
 ### 1. Environment Configuration
 Create a `.env` file in the root directory:
@@ -170,7 +168,12 @@ Create a `.env` file in the root directory:
 ADMIN_PASSWORD=your_secure_password_here
 
 # PostgreSQL Database Connection URL (required)
-DATABASE_URL="postgres://username:password@hostname:5432/database?sslmode=require"
+DATABASE_URL="postgresql://username:password@hostname:5432/database"
+
+# Google Sheets Integration (required for Sheets sync, optional for core features)
+GOOGLE_SPREADSHEET_ID="your_google_sheet_id_here"
+GCP_CLIENT_EMAIL="sheets-sync@your-project-id.iam.gserviceaccount.com"
+GCP_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nyour_key_lines_here\n-----END PRIVATE KEY-----"
 
 # SMTP Email Configuration (optional; logs to sent_emails.log if omitted)
 SMTP_HOST=smtp.gmail.com
@@ -188,8 +191,8 @@ Install project dependencies:
 npm install
 ```
 
-### 3. Database Push
-Push your schema changes and initialize the SQLite database:
+### 3. Database Schema Push
+Push your schema changes and initialize the PostgreSQL database tables:
 ```bash
 npm run db:push
 ```
@@ -203,17 +206,30 @@ Open your browser and navigate to `http://localhost:5000` to preview the site.
 
 ---
 
-## 📦 Production Deployment
+## 📦 Production Deployment (Vercel Serverless)
 
-### Build the Assets
-Compile the React frontend bundle and build the backend server:
-```bash
-npm run build
-```
+This application is fully optimized for serverless hosting on **Vercel** with a decoupled frontend/backend router configuration.
 
-### Start the Server
-Run the production bundle:
-```bash
-npm start
-```
-The server will boot up in production mode, serving pre-rendered assets with optimized cache configurations.
+### Vercel Routing Configuration (`vercel.json`)
+The routing configuration is managed by the root [`vercel.json`](file:///d:/ASHISH%20GITHUB/SINGH-CAKE-DELIGHT/vercel.json):
+*   Routes `/api/*` requests directly to the serverless function handler (`backend/index.ts`).
+*   Serves compiled frontend static assets natively at the CDN level.
+*   Enforces fallback routing to `/index.html` to support React client-side routing.
+
+### Critical Database Connection Rules on Vercel
+> [!IMPORTANT]
+> **Use Supabase Connection Pooler (Port 6543)**
+> Supabase direct database hostnames (`db.[project-id].supabase.co`) are **IPv6-only**. Because Vercel serverless containers do not support outbound IPv6 network resolutions, using the direct hostname will result in `getaddrinfo ENOTFOUND` errors.
+>
+> You **MUST** configure the `DATABASE_URL` in Vercel to use the **Supabase Transaction Pooler** (which resolves to IPv4 and runs on port **`6543`**).
+>
+> **Format:**
+> ```text
+> postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
+> ```
+> *Note: Be sure to append the project ID to the username (`postgres.[PROJECT_ID]`) so the pooler can identify your database tenant, and percent-encode any special characters in the password (e.g., `@` as `%40`).*
+
+### ES Modules ESM Rules
+The project compiles as standard ES Modules (`"type": "module"`). In accordance with strict ESM rules:
+*   All relative imports in the backend must include explicit file extensions (e.g., `import { db } from "./db.js";`).
+*   Express static serving is automatically bypassed on Vercel (`!process.env.VERCEL`) to prevent container boot crashes caused by the missing public directory in serverless builds.
