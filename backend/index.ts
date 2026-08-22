@@ -148,9 +148,11 @@ app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
   return res.status(status).json({ message });
 });
 
-// Setup static files or Vite
+// Setup static files or Vite (only serve static files on local production, Vercel handles it natively)
 if (process.env.NODE_ENV === "production") {
-  serveStatic(app);
+  if (!process.env.VERCEL) {
+    serveStatic(app);
+  }
 } else {
   // Vite setup is async, so we wrap it
   (async () => {
