@@ -96,10 +96,10 @@ flowchart TD
 
 Here is a simple, step-by-step walkthrough of how a customer orders a cake on Singh Cake Delight:
 
-1. **Browsing & Ordering**: 
-   - A customer visits the bakery website and clicks **Order Now** or goes to customize their cake.
-2. **Account Login or Sign-up**: 
-   - If they aren't logged in, the website guides them to log in or create a quick account (using their email and password) so their order details and booking history are saved safely.
+1. **Account Login or Sign-up**: 
+   - A customer visits the bakery website and is guided to log in or create a quick account (using their email and password) so their order details and booking history are saved safely.
+2. **Browsing the Catalog**: 
+   - Once logged in, they can browse the premium cake catalog, view the gallery, and select custom configuration menus.
 3. **Configuring the Cake**: 
    - The customer fills out a simple form to choose their cake flavor, select size/tiers, describe modifications, and upload a photo of their desired custom design.
 4. **Selecting a Delivery Date & Time**: 
