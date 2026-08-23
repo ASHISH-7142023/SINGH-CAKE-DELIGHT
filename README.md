@@ -88,19 +88,33 @@ flowchart TD
     class C_Val,A_Alert system;
 ```
 
-### 1. User & Admin Authentication Flow
-*   **Customer Auth**: Standard registration and session-cookie login. Features clean forms with immediate feedback.
+### 1. How Ordering Works (Step-by-Step Customer Journey)
+
+Here is a simple, step-by-step walkthrough of how a customer orders a cake on Singh Cake Delight:
+
+1. **Browsing & Ordering**: 
+   - A customer visits the bakery website and clicks **Order Now** or goes to customize their cake.
+2. **Account Login or Sign-up**: 
+   - If they aren't logged in, the website guides them to log in or create a quick account (using their email and password) so their order details and booking history are saved safely.
+3. **Configuring the Cake**: 
+   - The customer fills out a simple form to choose their cake flavor, select size/tiers, describe modifications, and upload a photo of their desired custom design.
+4. **Selecting a Delivery Date & Time**: 
+   - The customer picks when they want to receive the cake:
+     - **Preparation Rule**: The delivery date must be at least **4 days in advance** so the bakers have time to prepare custom designs.
+     - **Delivery Hours**: Times must fall within bakery hours (**7:00 AM to 8:00 PM**).
+5. **Placing the Order**: 
+   - The customer clicks **Place Order**. Behind the scenes, the website automatically:
+     - Saves the order in the bakery database.
+     - Syncs details to the bakery's live **Google Sheet**.
+     - Updates the local **Excel Spreadsheet** logs.
+     - Sends a confirmation **email receipt** directly to the customer's inbox.
+6. **Finalizing on WhatsApp**: 
+   - The website redirects the customer to WhatsApp with a pre-written message containing their Order ID. Sending this text lets the baker verify payment and finalize customization details directly with the customer.
+
+### 2. Admin Security & Dashboard Loop
 *   **Admin Shield**: The Admin Dashboard is restricted to a dedicated email. Upon successful authentication:
     *   **Email Alert Dispatch**: The server geolocates the incoming IP address (using IP-API), parses the device User-Agent, formats the timestamps into Indian Standard Time (IST), and emails a stylized security alert to the admin inbox.
     *   **Secure OTP Loop**: Forgotten admin passwords trigger a 6-digit verification code sent via Nodemailer. Once verified, the server hashes the new password using scrypt, updates the database, writes it directly back to the secure `.env` file, and pushes it to active memory.
-
-### 2. Customer Custom Order Scheduling Workflow
-*   **Interactive Designer & Form**: Customers can select a standard catalog cake or build a custom layout. They can input customization notes, list requested modifications, and upload a custom image (restricted to `<2MB` base64 format).
-*   **Time & Schedule Safeguards**:
-    *   **The 4-Day Rule**: The date-picker locks out dates less than **4 days in advance**, giving bakers ample time to source ingredients and prepare custom designs.
-    *   **Opening Hours Safeguard**: Order times are strictly verified to fall between **7:00 AM and 8:00 PM**.
-*   **Submit & Sync**: Upon submission, the order is registered as `pending` in the PostgreSQL database, which automatically kicks off background synchronization routines to Google Sheets and offline Excel backups.
-*   **Redirection to WhatsApp**: The customer receives a success popup and is prompted to click a direct link. This opens a secure WhatsApp thread with the bakery owner, carrying a pre-filled, templated message containing their Order ID, cake request, and pickup date to finalize customization.
 
 ### 3. Admin Dashboard Control Loop
 *   **Live Order Tracking Grid**: Displayed in a responsive table layout. Admins can view order states, details, custom notes, and click customer references to open a fullscreen image preview overlay.
