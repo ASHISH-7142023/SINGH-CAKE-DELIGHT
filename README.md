@@ -90,6 +90,10 @@ flowchart TD
 
 ### 1. How Ordering Works (Step-by-Step Customer Journey)
 
+<div align="center">
+  <img src="frontend/public/ordering_workflow.jpg" alt="Singh Cake Delight Ordering Process Workflow" width="720" style="max-width: 100%; border-radius: 12px; margin-bottom: 20px;" />
+</div>
+
 Here is a simple, step-by-step walkthrough of how a customer orders a cake on Singh Cake Delight:
 
 1. **Browsing & Ordering**: 
