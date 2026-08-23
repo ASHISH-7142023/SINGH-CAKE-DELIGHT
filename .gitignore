@@ -6,3 +6,4 @@ sqlite.db-wal
 sent_emails.log
 .env
 exports/
+scratch/
