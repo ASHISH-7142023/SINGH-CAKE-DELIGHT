@@ -10,6 +10,9 @@ import { db } from "./db.js";
 import { eq } from "drizzle-orm";
 import fs from "fs";
 import path from "path";
+import { OAuth2Client } from "google-auth-library";
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // Helper function to update ADMIN_PASSWORD in .env file and process.env
 function updateAdminPasswordInEnv(newPassword: string) {
@@ -617,17 +620,36 @@ export async function registerRoutes(
 
   app.post("/api/login-google", async (req, res) => {
     try {
-      const { name, email, phone } = req.body;
-      if (!email || !name || !phone) {
-        return res.status(400).json({ message: "Name, email, and phone are required for Google registration" });
+      const { credential, phone } = req.body;
+      if (!credential) {
+        return res.status(400).json({ message: "Google credential is required" });
       }
 
-      let user = await storage.getUserByEmail(email.toLowerCase().trim());
+      // Verify the Google ID token
+      const ticket = await googleClient.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      
+      if (!payload || !payload.email || !payload.name) {
+         return res.status(400).json({ message: "Invalid Google credential payload" });
+      }
+
+      const email = payload.email.toLowerCase().trim();
+      const name = payload.name.trim();
+
+      let user = await storage.getUserByEmail(email);
       if (!user) {
+        if (!phone) {
+          // New user, but phone number is required
+          return res.status(400).json({ requirePhone: true, message: "Phone number required to complete registration" });
+        }
+
         // Create user with null password (meaning Google OAuth)
         user = await storage.createUser({
-          name: name.trim(),
-          email: email.toLowerCase().trim(),
+          name: name,
+          email: email,
           phone: formatPhoneWithCountryCode(phone),
           password: null,
         });

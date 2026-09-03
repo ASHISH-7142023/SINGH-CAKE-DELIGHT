@@ -8,6 +8,7 @@ import Admin from "./pages/Admin";
 import Auth from "./pages/Auth";
 import NotFound from "@/pages/not-found";
 import { CursorTrail } from "@/components/CursorTrail";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 function Router() {
   const { data: user, isLoading } = useQuery<any>({
@@ -47,14 +48,18 @@ function Router() {
 }
 
 function App() {
+  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <CursorTrail />
-        <Toaster />
-        <Router />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <GoogleOAuthProvider clientId={clientId || ""}>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <CursorTrail />
+          <Toaster />
+          <Router />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </GoogleOAuthProvider>
   );
 }
 

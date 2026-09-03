@@ -18,10 +18,10 @@ export default function Auth() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
 
-  // Simulated Google Sign-In states
+  // Real Google Sign-In states
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
   const [googlePhone, setGooglePhone] = useState("");
-  const [selectedGoogleAccount, setSelectedGoogleAccount] = useState<{ name: string; email: string } | null>(null);
+  const [googleCredential, setGoogleCredential] = useState<string | null>(null);
 
   // Forgot Password state
   const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
@@ -84,6 +84,16 @@ export default function Auth() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(googleData),
       });
+      if (res.status === 400) {
+        const err = await res.json();
+        if (err.requirePhone) {
+          // Open the phone number modal
+          setGoogleCredential(googleData.credential);
+          setIsGoogleModalOpen(true);
+          return;
+        }
+        throw new Error(err.message || "Failed to log in with Google");
+      }
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.message || "Failed to log in with Google");
@@ -91,8 +101,11 @@ export default function Auth() {
       return res.json();
     },
     onSuccess: (data) => {
-      queryClient.setQueryData(["/api/me"], data);
-      setLocation("/");
+      if (data) {
+        queryClient.setQueryData(["/api/me"], data);
+        setLocation("/");
+        setIsGoogleModalOpen(false);
+      }
     },
     onError: (err: any) => {
       setFormError(err.message);
@@ -116,23 +129,21 @@ export default function Auth() {
     }
   };
 
-  const handleGoogleAccountSelect = (account: { name: string; email: string }) => {
-    setSelectedGoogleAccount(account);
-    setGooglePhone("");
+  const handleGoogleSuccess = (credentialResponse: any) => {
+    setFormError("");
+    googleMutation.mutate({ credential: credentialResponse.credential });
   };
 
   const handleGoogleSubmit = () => {
-    if (!selectedGoogleAccount) return;
+    if (!googleCredential) return;
     const cleanPhone = googlePhone.trim().replace(/\D/g, "");
     if (cleanPhone.length < 10) {
       alert("Please enter a valid 10-digit WhatsApp number to continue");
       return;
     }
     const formattedPhone = cleanPhone.length === 10 ? `+91${cleanPhone}` : (googlePhone.trim().startsWith("+") ? googlePhone.trim() : `+${cleanPhone}`);
-    setIsGoogleModalOpen(false);
     googleMutation.mutate({
-      name: selectedGoogleAccount.name,
-      email: selectedGoogleAccount.email,
+      credential: googleCredential,
       phone: formattedPhone,
     });
   };
@@ -201,11 +212,6 @@ export default function Auth() {
     }
   };
 
-  const mockGoogleAccounts = [
-    { name: "Alice Developer", email: "alice.dev@gmail.com" },
-    { name: "Bob Baker", email: "bob.bakes@gmail.com" },
-    { name: "Charlie Cake", email: "charlie.cake@gmail.com" },
-  ];
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden selection:bg-primary/30">
@@ -374,35 +380,18 @@ export default function Auth() {
         </div>
 
         {/* Google Sign-In Button */}
-        <Button
-          type="button"
-          onClick={() => {
-            setSelectedGoogleAccount(null);
-            setGooglePhone("");
-            setIsGoogleModalOpen(true);
-          }}
-          className="w-full bg-white text-black hover:bg-white/90 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2.5 transition-transform active:scale-95 shadow-md"
-        >
-          <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24">
-            <path
-              fill="#4285F4"
-              d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v3.9h6.6c-.28 1.48-1.12 2.73-2.38 3.58v3h3.84c2.25-2.06 3.53-5.1 3.53-8.68z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.84-3c-1.07.72-2.44 1.15-4.09 1.15-3.15 0-5.82-2.13-6.78-5H1.28v3.1A11.94 11.94 0 0012 24z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.22 14.24A7.17 7.17 0 014.8 12c0-.79.13-1.57.38-2.3V6.6H1.28A11.94 11.94 0 000 12c0 2.27.63 4.4 1.28 5.4l3.94-3.16z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0A11.94 11.94 0 001.28 6.6l3.94 3.1c.96-2.87 3.63-5 6.78-5z"
-            />
-          </svg>
-          Google Sign-In
-        </Button>
+        <div className="flex justify-center w-full">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setFormError("Google Login Failed")}
+            useOneTap
+            shape="pill"
+            theme="filled_black"
+            size="large"
+            text="continue_with"
+            width="100%"
+          />
+        </div>
 
         {/* Auth Mode Toggle */}
         <p className="text-center text-sm text-white/65 mt-6 font-medium">
@@ -446,47 +435,16 @@ export default function Auth() {
             </DialogTitle>
           </DialogHeader>
 
-          {!selectedGoogleAccount ? (
-            <div className="space-y-4 pt-4">
-              <p className="text-xs text-muted-foreground font-medium text-center">
-                Choose an account to continue to Singh Cake Delight
+          <div className="space-y-4 pt-4">
+            <div className="p-4 rounded-xl bg-secondary/35 border border-border/50 text-center relative flex flex-col items-center">
+              <span className="w-12 h-12 rounded-full bg-primary/10 text-primary font-display font-bold text-lg flex items-center justify-center border border-primary/20 mb-2">
+                <User className="w-6 h-6" />
+              </span>
+              <p className="font-bold text-sm text-foreground">Almost there!</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                We need a WhatsApp number to complete your registration.
               </p>
-              <div className="divide-y divide-border border border-border rounded-xl overflow-hidden bg-background">
-                {mockGoogleAccounts.map((account, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleGoogleAccountSelect(account)}
-                    className="w-full px-4 py-3.5 text-left hover:bg-secondary/40 transition-colors flex items-center justify-between group"
-                  >
-                    <div>
-                      <p className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
-                        {account.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{account.email}</p>
-                    </div>
-                    <span className="w-7 h-7 rounded-full bg-secondary text-xs flex items-center justify-center font-bold text-muted-foreground uppercase border border-border">
-                      {account.name.charAt(0)}
-                    </span>
-                  </button>
-                ))}
-              </div>
             </div>
-          ) : (
-            <div className="space-y-4 pt-4">
-              <div className="p-4 rounded-xl bg-secondary/35 border border-border/50 text-center relative flex flex-col items-center">
-                <span className="w-12 h-12 rounded-full bg-primary/10 text-primary font-display font-bold text-lg flex items-center justify-center border border-primary/20 mb-2">
-                  {selectedGoogleAccount.name.charAt(0)}
-                </span>
-                <p className="font-bold text-sm text-foreground">{selectedGoogleAccount.name}</p>
-                <p className="text-xs text-muted-foreground">{selectedGoogleAccount.email}</p>
-                
-                <button
-                  onClick={() => setSelectedGoogleAccount(null)}
-                  className="text-xs text-primary underline mt-2 font-semibold hover:text-primary/80"
-                >
-                  Use another account
-                </button>
-              </div>
 
               {/* Enter Phone Number for Order Details */}
               <div className="space-y-1.5 text-left">
@@ -515,20 +473,23 @@ export default function Auth() {
               <div className="flex gap-3 pt-2">
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedGoogleAccount(null)}
+                  onClick={() => {
+                    setIsGoogleModalOpen(false);
+                    setGoogleCredential(null);
+                  }}
                   className="flex-1 rounded-xl"
                 >
-                  Back
+                  Cancel
                 </Button>
                 <Button
                   onClick={handleGoogleSubmit}
+                  disabled={googleMutation.isPending}
                   className="flex-1 bg-primary hover:bg-primary/95 text-primary-foreground font-bold rounded-xl"
                 >
-                  Sign In Account
+                  {googleMutation.isPending ? "Signing In..." : "Complete Sign In"}
                 </Button>
               </div>
             </div>
-          )}
         </DialogContent>
       </Dialog>
 
