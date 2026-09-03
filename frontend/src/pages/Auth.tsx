@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, Lock, Mail, Phone, User, ShieldAlert } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { GoogleLogin } from "@react-oauth/google";
 
 export default function Auth() {
   const [, setLocation] = useLocation();
